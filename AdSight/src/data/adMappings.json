@@ -1,0 +1,385 @@
+{
+  "platforms": {
+    "facebook": {
+      "name": "Facebook",
+      "categories": [
+        {
+          "id": "fashion",
+          "name": "Fashion & Clothing",
+          "keywords": ["fashion", "clothing", "style", "outfit", "designer", "brand", "shoes", "accessories"],
+          "examples": ["Latest summer collection from Zara", "Nike Air Max sneakers", "Designer handbags sale"],
+          "weight": 1.2
+        },
+        {
+          "id": "technology",
+          "name": "Technology & Electronics",
+          "keywords": ["tech", "phone", "laptop", "gadget", "software", "app", "gaming", "computer"],
+          "examples": ["iPhone 15 Pro Max", "Samsung Galaxy S24", "Gaming laptop deals"],
+          "weight": 1.1
+        },
+        {
+          "id": "food",
+          "name": "Food & Restaurants",
+          "keywords": ["food", "restaurant", "cooking", "recipe", "delivery", "cuisine", "dining"],
+          "examples": ["Local pizza delivery", "Cooking masterclass", "Restaurant week specials"],
+          "weight": 1.0
+        },
+        {
+          "id": "travel",
+          "name": "Travel & Tourism",
+          "keywords": ["travel", "vacation", "flight", "hotel", "tourism", "destination", "booking"],
+          "examples": ["Flight deals to Paris", "Beach resort packages", "City break offers"],
+          "weight": 0.9
+        },
+        {
+          "id": "fitness",
+          "name": "Health & Fitness",
+          "keywords": ["fitness", "health", "gym", "workout", "nutrition", "wellness", "supplements"],
+          "examples": ["Home gym equipment", "Protein supplements", "Fitness app subscription"],
+          "weight": 1.0
+        },
+        {
+          "id": "education",
+          "name": "Education & Courses",
+          "keywords": ["education", "course", "learning", "skill", "certification", "training", "study"],
+          "examples": ["Online coding bootcamp", "Language learning app", "Professional certification"],
+          "weight": 0.8
+        }
+      ],
+      "rules": [
+        {
+          "trigger": {
+            "type": "interest",
+            "keywords": ["technology", "programming", "coding"]
+          },
+          "result": {
+            "categories": ["technology"],
+            "confidence": 0.8
+          }
+        },
+        {
+          "trigger": {
+            "type": "search",
+            "keywords": ["shopping", "buy", "purchase"]
+          },
+          "result": {
+            "categories": ["fashion", "technology"],
+            "confidence": 0.7
+          }
+        }
+      ]
+    },
+    "instagram": {
+      "name": "Instagram",
+      "categories": [
+        {
+          "id": "fashion",
+          "name": "Fashion & Beauty",
+          "keywords": ["fashion", "beauty", "makeup", "skincare", "style", "influencer", "brand"],
+          "examples": ["Sephora makeup collection", "Fashion nova outfits", "Beauty routine products"],
+          "weight": 1.5
+        },
+        {
+          "id": "lifestyle",
+          "name": "Lifestyle & Wellness",
+          "keywords": ["lifestyle", "wellness", "self-care", "mindfulness", "yoga", "meditation"],
+          "examples": ["Wellness retreat", "Yoga mat subscription", "Meditation app premium"],
+          "weight": 1.3
+        },
+        {
+          "id": "food",
+          "name": "Food & Dining",
+          "keywords": ["food", "foodie", "restaurant", "cooking", "recipe", "healthy eating"],
+          "examples": ["Trendy café in your area", "Meal kit delivery", "Kitchen appliances"],
+          "weight": 1.2
+        },
+        {
+          "id": "travel",
+          "name": "Travel & Adventure",
+          "keywords": ["travel", "adventure", "explore", "vacation", "wanderlust", "photography"],
+          "examples": ["Instagram-worthy destinations", "Travel photography gear", "Adventure tours"],
+          "weight": 1.1
+        },
+        {
+          "id": "fitness",
+          "name": "Fitness & Sports",
+          "keywords": ["fitness", "workout", "gym", "sports", "athletic", "training"],
+          "examples": ["Athleisure wear", "Home workout equipment", "Sports nutrition"],
+          "weight": 1.0
+        }
+      ],
+      "rules": [
+        {
+          "trigger": {
+            "type": "interest",
+            "keywords": ["photography", "art", "creative"]
+          },
+          "result": {
+            "categories": ["lifestyle", "travel"],
+            "confidence": 0.75
+          }
+        }
+      ]
+    },
+    "google": {
+      "name": "Google Search",
+      "categories": [
+        {
+          "id": "shopping",
+          "name": "Shopping & E-commerce",
+          "keywords": ["buy", "shop", "purchase", "deal", "sale", "discount", "price"],
+          "examples": ["Best deals on electronics", "Compare prices", "Online shopping discounts"],
+          "weight": 1.4
+        },
+        {
+          "id": "services",
+          "name": "Local Services",
+          "keywords": ["service", "repair", "maintenance", "local", "near me", "professional"],
+          "examples": ["Plumber near you", "Car repair services", "Home cleaning services"],
+          "weight": 1.2
+        },
+        {
+          "id": "education",
+          "name": "Education & Information",
+          "keywords": ["learn", "course", "tutorial", "how to", "guide", "education"],
+          "examples": ["Online courses", "Professional training", "Skill development programs"],
+          "weight": 1.0
+        },
+        {
+          "id": "technology",
+          "name": "Technology & Software",
+          "keywords": ["software", "app", "technology", "digital", "cloud", "automation"],
+          "examples": ["Business software solutions", "Cloud storage services", "Productivity apps"],
+          "weight": 1.1
+        },
+        {
+          "id": "finance",
+          "name": "Finance & Insurance",
+          "keywords": ["finance", "insurance", "loan", "investment", "banking", "credit"],
+          "examples": ["Personal loans", "Car insurance quotes", "Investment platforms"],
+          "weight": 0.9
+        }
+      ],
+      "rules": [
+        {
+          "trigger": {
+            "type": "search",
+            "keywords": ["how to", "tutorial", "guide"]
+          },
+          "result": {
+            "categories": ["education"],
+            "confidence": 0.9
+          }
+        }
+      ]
+    },
+    "youtube": {
+      "name": "YouTube",
+      "categories": [
+        {
+          "id": "entertainment",
+          "name": "Entertainment & Media",
+          "keywords": ["entertainment", "movie", "music", "streaming", "video", "content"],
+          "examples": ["Netflix subscription", "Spotify premium", "Gaming content"],
+          "weight": 1.3
+        },
+        {
+          "id": "education",
+          "name": "Educational Content",
+          "keywords": ["education", "tutorial", "learning", "skill", "course", "knowledge"],
+          "examples": ["MasterClass subscription", "Skillshare courses", "Online tutorials"],
+          "weight": 1.2
+        },
+        {
+          "id": "technology",
+          "name": "Tech Reviews & Gadgets",
+          "keywords": ["tech", "review", "gadget", "unboxing", "smartphone", "laptop"],
+          "examples": ["Latest smartphone reviews", "Tech gadget deals", "Gaming peripherals"],
+          "weight": 1.1
+        },
+        {
+          "id": "lifestyle",
+          "name": "Lifestyle & Vlog",
+          "keywords": ["lifestyle", "vlog", "daily", "routine", "personal", "life"],
+          "examples": ["Life organization tools", "Productivity apps", "Lifestyle products"],
+          "weight": 1.0
+        },
+        {
+          "id": "gaming",
+          "name": "Gaming",
+          "keywords": ["gaming", "game", "esports", "streaming", "console", "pc gaming"],
+          "examples": ["Gaming chairs", "Gaming headsets", "Game subscriptions"],
+          "weight": 1.0
+        }
+      ],
+      "rules": [
+        {
+          "trigger": {
+            "type": "app",
+            "keywords": ["gaming", "entertainment"]
+          },
+          "result": {
+            "categories": ["gaming", "entertainment"],
+            "confidence": 0.85
+          }
+        }
+      ]
+    },
+    "tiktok": {
+      "name": "TikTok",
+      "categories": [
+        {
+          "id": "trends",
+          "name": "Trending Products",
+          "keywords": ["trending", "viral", "popular", "trend", "must-have", "everyone"],
+          "examples": ["Viral skincare products", "Trending fashion items", "Popular gadgets"],
+          "weight": 1.6
+        },
+        {
+          "id": "beauty",
+          "name": "Beauty & Skincare",
+          "keywords": ["beauty", "skincare", "makeup", "cosmetics", "routine", "glow"],
+          "examples": ["TikTok famous serums", "Makeup tutorials", "Skincare routines"],
+          "weight": 1.4
+        },
+        {
+          "id": "fashion",
+          "name": "Fashion & Style",
+          "keywords": ["fashion", "style", "outfit", "clothing", "aesthetic", "trendy"],
+          "examples": ["Aesthetic clothing brands", "Outfit inspiration", "Fashion hauls"],
+          "weight": 1.3
+        },
+        {
+          "id": "food",
+          "name": "Food & Recipes",
+          "keywords": ["food", "recipe", "cooking", "foodtok", "kitchen", "snack"],
+          "examples": ["Viral recipes", "Kitchen gadgets", "Cooking hacks"],
+          "weight": 1.2
+        },
+        {
+          "id": "lifestyle",
+          "name": "Lifestyle & DIY",
+          "keywords": ["lifestyle", "diy", "hack", "tip", "life hack", "organization"],
+          "examples": ["Organization products", "DIY supplies", "Life hack tools"],
+          "weight": 1.1
+        }
+      ],
+      "rules": [
+        {
+          "trigger": {
+            "type": "interest",
+            "keywords": ["dance", "music", "creative"]
+          },
+          "result": {
+            "categories": ["trends", "lifestyle"],
+            "confidence": 0.8
+          }
+        }
+      ]
+    },
+    "linkedin": {
+      "name": "LinkedIn",
+      "categories": [
+        {
+          "id": "professional",
+          "name": "Professional Development",
+          "keywords": ["professional", "career", "development", "skill", "certification", "training"],
+          "examples": ["Professional courses", "Career coaching", "Skill certifications"],
+          "weight": 1.5
+        },
+        {
+          "id": "business",
+          "name": "Business Solutions",
+          "keywords": ["business", "enterprise", "solution", "software", "productivity", "management"],
+          "examples": ["Business software", "Enterprise solutions", "Management tools"],
+          "weight": 1.3
+        },
+        {
+          "id": "education",
+          "name": "Education & Learning",
+          "keywords": ["education", "learning", "course", "degree", "mba", "executive"],
+          "examples": ["Executive MBA programs", "Professional certifications", "Online degrees"],
+          "weight": 1.2
+        },
+        {
+          "id": "finance",
+          "name": "Finance & Investment",
+          "keywords": ["finance", "investment", "financial", "wealth", "retirement", "planning"],
+          "examples": ["Investment platforms", "Financial planning", "Retirement services"],
+          "weight": 1.0
+        },
+        {
+          "id": "networking",
+          "name": "Networking & Events",
+          "keywords": ["networking", "event", "conference", "seminar", "workshop", "meetup"],
+          "examples": ["Professional conferences", "Networking events", "Industry workshops"],
+          "weight": 0.9
+        }
+      ],
+      "rules": [
+        {
+          "trigger": {
+            "type": "interest",
+            "keywords": ["business", "entrepreneurship", "leadership"]
+          },
+          "result": {
+            "categories": ["professional", "business"],
+            "confidence": 0.9
+          }
+        }
+      ]
+    },
+    "amazon": {
+      "name": "Amazon",
+      "categories": [
+        {
+          "id": "electronics",
+          "name": "Electronics & Gadgets",
+          "keywords": ["electronics", "gadget", "device", "technology", "smart", "digital"],
+          "examples": ["Smart home devices", "Wireless earbuds", "Phone accessories"],
+          "weight": 1.4
+        },
+        {
+          "id": "home",
+          "name": "Home & Garden",
+          "keywords": ["home", "garden", "furniture", "decor", "kitchen", "household"],
+          "examples": ["Home decor items", "Kitchen appliances", "Garden tools"],
+          "weight": 1.2
+        },
+        {
+          "id": "books",
+          "name": "Books & Media",
+          "keywords": ["book", "reading", "kindle", "audiobook", "literature", "education"],
+          "examples": ["Bestselling books", "Kindle deals", "Audiobook subscriptions"],
+          "weight": 1.0
+        },
+        {
+          "id": "fashion",
+          "name": "Fashion & Clothing",
+          "keywords": ["fashion", "clothing", "shoes", "accessories", "style", "apparel"],
+          "examples": ["Clothing deals", "Shoe collections", "Fashion accessories"],
+          "weight": 1.1
+        },
+        {
+          "id": "health",
+          "name": "Health & Personal Care",
+          "keywords": ["health", "personal care", "beauty", "supplements", "wellness", "fitness"],
+          "examples": ["Health supplements", "Personal care products", "Fitness equipment"],
+          "weight": 1.0
+        }
+      ],
+      "rules": [
+        {
+          "trigger": {
+            "type": "purchase",
+            "keywords": ["buy", "order", "purchase"]
+          },
+          "result": {
+            "categories": ["electronics", "home", "fashion"],
+            "confidence": 0.85
+          }
+        }
+      ]
+    }
+  }
+}
