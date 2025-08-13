@@ -5,8 +5,7 @@ import { createDrawerNavigator } from '@react-navigation/drawer';
 import { StatusBar } from 'expo-status-bar';
 import { Provider as PaperProvider } from 'react-native-paper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as tf from '@tensorflow/tfjs';
-import '@tensorflow/tfjs-react-native';
+
 import { NotificationService } from './src/services/NotificationService';
 
 // Import screens
@@ -77,9 +76,6 @@ export default function App() {
 
   const initializeApp = async () => {
     try {
-      // Initialize TensorFlow
-      await tf.ready();
-      
       // Initialize Notification Service
       const notificationService = NotificationService.getInstance();
       await notificationService.initialize();
