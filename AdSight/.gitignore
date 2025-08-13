@@ -8,6 +8,8 @@ node_modules/
 # Expo
 .expo/
 dist/
+!dist/*.md5
+!dist/*.md
 web-build/
 
 # Native
