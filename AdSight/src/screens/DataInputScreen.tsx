@@ -163,7 +163,7 @@ export default function DataInputScreen() {
         [
           {
             text: 'OK',
-            onPress: () => navigation.navigate('Dashboard')
+            onPress: () => navigation.navigate('Dashboard' as never)
           }
         ]
       );

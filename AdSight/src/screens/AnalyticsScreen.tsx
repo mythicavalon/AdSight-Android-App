@@ -292,8 +292,8 @@ export default function AnalyticsScreen() {
               return (
                 <View key={platform} style={styles.platformMetric}>
                   <View style={styles.platformHeader}>
-                    <Text style={styles.platformIcon}>{platformIcons[platform]}</Text>
-                    <Text style={styles.platformName}>{platformNames[platform]}</Text>
+                    <Text style={styles.platformIcon}>{platformIcons[platform as Platform]}</Text>
+                    <Text style={styles.platformName}>{platformNames[platform as Platform]}</Text>
                     <Text style={styles.platformValue}>{Math.round(value * 100)}%</Text>
                   </View>
                   <ProgressBar
@@ -358,8 +358,8 @@ export default function AnalyticsScreen() {
             {analyticsData.trends.map((trend: any, index: number) => (
               <View key={index} style={styles.trendItem}>
                 <View style={styles.trendHeader}>
-                  <Text style={styles.trendIcon}>{platformIcons[trend.platform]}</Text>
-                  <Text style={styles.trendPlatform}>{platformNames[trend.platform]}</Text>
+                  <Text style={styles.trendIcon}>{platformIcons[trend.platform as Platform]}</Text>
+                  <Text style={styles.trendPlatform}>{platformNames[trend.platform as Platform]}</Text>
                 </View>
                 <Text style={styles.trendCategory}>
                   Top: {trend.topCategory}

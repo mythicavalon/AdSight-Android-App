@@ -108,7 +108,7 @@ export default function DashboardScreen() {
   };
 
   const handleCreateProfile = () => {
-    navigation.navigate('DataInput');
+    navigation.navigate('DataInput' as never);
   };
 
   const handleTrySimulated = () => {

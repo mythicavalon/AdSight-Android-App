@@ -7,6 +7,8 @@ Notifications.setNotificationHandler({
     shouldShowAlert: true,
     shouldPlaySound: true,
     shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
   }),
 });
 
@@ -70,6 +72,7 @@ export class NotificationService {
         trigger: {
           seconds: 60 * 60 * 24 * 30, // 30 days
           repeats: true,
+          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
         },
       });
 
@@ -136,6 +139,7 @@ export class NotificationService {
         },
         trigger: {
           seconds: 1,
+          type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
         },
       });
 

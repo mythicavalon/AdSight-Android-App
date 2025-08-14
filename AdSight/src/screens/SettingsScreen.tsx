@@ -118,6 +118,7 @@ export default function SettingsScreen() {
           trigger: {
             seconds: 60 * 60 * 24 * 30, // 30 days
             repeats: true,
+            type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
           },
         });
       }
@@ -171,7 +172,7 @@ export default function SettingsScreen() {
               // Reset navigation stack to onboarding
               navigation.reset({
                 index: 0,
-                routes: [{ name: 'Welcome' }],
+                routes: [{ name: 'Welcome' as never }],
               });
             }
           }
@@ -262,7 +263,7 @@ export default function SettingsScreen() {
               title="Update Profile Data"
               description="Modify your interests and preferences"
               left={(props) => <List.Icon {...props} icon="account-edit" color={theme.colors.primary} />}
-              onPress={() => navigation.navigate('DataInput')}
+              onPress={() => navigation.navigate('DataInput' as never)}
               style={styles.listItem}
               titleStyle={styles.listTitle}
               descriptionStyle={styles.listDescription}
