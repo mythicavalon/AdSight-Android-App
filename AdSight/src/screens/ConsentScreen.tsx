@@ -28,6 +28,7 @@ export default function ConsentScreen() {
   const [dataCollectionConsent, setDataCollectionConsent] = useState(false);
   const [offlineProcessingConsent, setOfflineProcessingConsent] = useState(false);
   const [updateReminderConsent, setUpdateReminderConsent] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   const handleAcceptConsent = async () => {
     if (!dataCollectionConsent || !offlineProcessingConsent) {
@@ -40,18 +41,20 @@ export default function ConsentScreen() {
     }
 
     try {
-      await AsyncStorage.setItem('onboarding_complete', 'true');
-      await AsyncStorage.setItem('consent_timestamp', new Date().toISOString());
-      await AsyncStorage.setItem('update_reminders_enabled', updateReminderConsent.toString());
-      
-      // Reset the navigation stack to go to main app
-      navigation.reset({
-        index: 0,
-        routes: [{ name: 'Main' }],
-      });
+      setSubmitting(true);
+      // Navigate immediately for responsiveness
+      navigation.reset({ index: 0, routes: [{ name: 'Main' as never }] });
+      // Persist settings in background
+      await AsyncStorage.multiSet([
+        ['onboarding_complete', 'true'],
+        ['consent_timestamp', new Date().toISOString()],
+        ['update_reminders_enabled', updateReminderConsent.toString()],
+      ]);
     } catch (error) {
       console.error('Error saving consent:', error);
       Alert.alert('Error', 'Failed to save consent. Please try again.');
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -64,7 +67,6 @@ export default function ConsentScreen() {
           text: 'Exit App',
           style: 'destructive',
           onPress: () => {
-            // In a real app, you might want to exit or go back to welcome
             navigation.goBack();
           },
         },
@@ -95,7 +97,6 @@ export default function ConsentScreen() {
             <Paragraph style={styles.description}>
               AdSight may collect and process the following data types locally on your device:
             </Paragraph>
-            
             <View style={styles.dataList}>
               <Text style={styles.dataItem}>• Personal interests (manually entered by you)</Text>
               <Text style={styles.dataItem}>• Exported ad preferences from platforms (Facebook, Google, Amazon)</Text>
@@ -112,7 +113,6 @@ export default function ConsentScreen() {
             <Paragraph style={styles.description}>
               This data is used exclusively to:
             </Paragraph>
-            
             <View style={styles.dataList}>
               <Text style={styles.dataItem}>• Generate accurate ad predictions for various platforms</Text>
               <Text style={styles.dataItem}>• Provide insights into your digital advertising profile</Text>
@@ -122,24 +122,9 @@ export default function ConsentScreen() {
           </Card.Content>
         </Card>
 
-        <Card style={styles.card}>
-          <Card.Content>
-            <Title style={styles.cardTitle}>Your Privacy Guarantee</Title>
-            <View style={styles.privacyList}>
-              <Text style={styles.privacyItem}>🔒 All data stays on your device - never transmitted</Text>
-              <Text style={styles.privacyItem}>⚡ All processing happens offline</Text>
-              <Text style={styles.privacyItem}>🗑️ You can delete all data anytime</Text>
-              <Text style={styles.privacyItem}>🚫 No tracking, analytics, or data collection by us</Text>
-              <Text style={styles.privacyItem}>💰 Completely free - no hidden costs or data monetization</Text>
-              <Text style={styles.privacyItem}>📖 Open source - you can verify our claims</Text>
-            </View>
-          </Card.Content>
-        </Card>
-
         <Card style={styles.consentCard}>
           <Card.Content>
             <Title style={styles.cardTitle}>Your Consent</Title>
-            
             <View style={styles.checkboxContainer}>
               <Checkbox
                 status={dataCollectionConsent ? 'checked' : 'unchecked'}
@@ -181,15 +166,12 @@ export default function ConsentScreen() {
           <Button
             mode="contained"
             onPress={handleAcceptConsent}
-            style={[
-              styles.button,
-              styles.acceptButton,
-              (!dataCollectionConsent || !offlineProcessingConsent) && styles.disabledButton
-            ]}
-            disabled={!dataCollectionConsent || !offlineProcessingConsent}
+            style={[styles.button, styles.acceptButton]}
+            disabled={submitting || !dataCollectionConsent || !offlineProcessingConsent}
+            loading={submitting}
             contentStyle={styles.buttonContent}
           >
-            Accept & Continue
+            {submitting ? 'Saving…' : 'Accept & Continue'}
           </Button>
 
           <Button
@@ -212,119 +194,25 @@ export default function ConsentScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-    padding: 20,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 30,
-    marginTop: 40,
-  },
-  title: {
-    fontSize: 28,
-    color: theme.colors.text,
-    textAlign: 'center',
-    fontWeight: 'bold',
-  },
-  subtitle: {
-    fontSize: 16,
-    color: theme.colors.text,
-    textAlign: 'center',
-    opacity: 0.8,
-    marginTop: 5,
-  },
-  card: {
-    marginBottom: 20,
-    backgroundColor: theme.colors.cardBackground,
-    elevation: 4,
-  },
-  consentCard: {
-    marginBottom: 30,
-    backgroundColor: theme.colors.cardBackground,
-    elevation: 4,
-    borderColor: theme.colors.primary,
-    borderWidth: 1,
-  },
-  cardTitle: {
-    color: theme.colors.text,
-    marginBottom: 10,
-    fontSize: 18,
-  },
-  description: {
-    color: theme.colors.text,
-    lineHeight: 24,
-    opacity: 0.9,
-    marginBottom: 10,
-  },
-  dataList: {
-    marginTop: 10,
-  },
-  dataItem: {
-    color: theme.colors.text,
-    fontSize: 14,
-    marginBottom: 6,
-    opacity: 0.9,
-    lineHeight: 20,
-  },
-  privacyList: {
-    marginTop: 10,
-  },
-  privacyItem: {
-    color: theme.colors.text,
-    fontSize: 15,
-    marginBottom: 8,
-    opacity: 0.9,
-    lineHeight: 22,
-  },
-  checkboxContainer: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    marginBottom: 15,
-    paddingRight: 10,
-  },
-  checkboxLabel: {
-    color: theme.colors.text,
-    fontSize: 14,
-    lineHeight: 20,
-    marginLeft: 8,
-    flex: 1,
-    opacity: 0.9,
-  },
-  divider: {
-    marginVertical: 15,
-    backgroundColor: theme.colors.borderColor,
-  },
-  buttonContainer: {
-    marginTop: 20,
-  },
-  button: {
-    marginBottom: 15,
-  },
-  buttonContent: {
-    paddingVertical: 8,
-  },
-  acceptButton: {
-    backgroundColor: theme.colors.success,
-  },
-  disabledButton: {
-    backgroundColor: theme.colors.disabled,
-  },
-  declineButton: {
-    borderColor: theme.colors.error,
-  },
-  declineButtonLabel: {
-    color: theme.colors.error,
-  },
-  footer: {
-    textAlign: 'center',
-    color: theme.colors.text,
-    opacity: 0.7,
-    fontSize: 12,
-    marginBottom: 20,
-    fontStyle: 'italic',
-  },
+  container: { flex: 1 },
+  scrollContent: { flexGrow: 1, padding: 20 },
+  header: { alignItems: 'center', marginBottom: 30, marginTop: 40 },
+  title: { fontSize: 28, color: theme.colors.text, textAlign: 'center', fontWeight: 'bold' },
+  subtitle: { fontSize: 16, color: theme.colors.text, textAlign: 'center' },
+  card: { marginBottom: 20, backgroundColor: theme.colors.cardBackground },
+  consentCard: { marginBottom: 30, backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.primary, borderWidth: 1 },
+  cardTitle: { color: theme.colors.text, marginBottom: 10, fontSize: 18 },
+  description: { color: theme.colors.text, lineHeight: 24 },
+  dataList: { marginTop: 10 },
+  dataItem: { color: theme.colors.text, fontSize: 14, marginBottom: 6, lineHeight: 20 },
+  checkboxContainer: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 15, paddingRight: 10 },
+  checkboxLabel: { color: theme.colors.text, fontSize: 14, lineHeight: 20, marginLeft: 8, flex: 1 },
+  divider: { marginVertical: 15, backgroundColor: theme.colors.borderColor },
+  buttonContainer: { marginTop: 20 },
+  button: { marginBottom: 15 },
+  buttonContent: { paddingVertical: 8 },
+  acceptButton: { backgroundColor: theme.colors.success },
+  declineButton: { borderColor: theme.colors.error },
+  declineButtonLabel: { color: theme.colors.error },
+  footer: { textAlign: 'center', color: theme.colors.text, fontSize: 12, marginBottom: 20, fontStyle: 'italic' },
 });

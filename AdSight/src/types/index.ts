@@ -109,4 +109,5 @@ export type MainDrawerParamList = {
   DataInput: undefined;
   Analytics: undefined;
   Settings: undefined;
+  Import: undefined;
 };

@@ -16,6 +16,7 @@ import DataInputScreen from './src/screens/DataInputScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import AnalyticsScreen from './src/screens/AnalyticsScreen';
 import CustomSidebar from './src/components/CustomSidebar';
+import ImportDataScreen from './src/screens/ImportDataScreen';
 
 // Import theme
 import { theme } from './src/theme/theme';
@@ -62,6 +63,11 @@ function MainAppNavigator() {
         component={SettingsScreen}
         options={{ title: 'Settings' }}
       />
+      <Drawer.Screen 
+        name="Import" 
+        component={ImportDataScreen}
+        options={{ title: 'Import Data' }}
+      />
     </Drawer.Navigator>
   );
 }
@@ -78,7 +84,8 @@ export default function App() {
     try {
       // Initialize Notification Service
       const notificationService = NotificationService.getInstance();
-      await notificationService.initialize();
+      // Defer heavy work to avoid blocking first paint
+      notificationService.initialize();
       
       // Check if user has completed onboarding
       const onboardingComplete = await AsyncStorage.getItem('onboarding_complete');

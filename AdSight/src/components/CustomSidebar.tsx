@@ -103,6 +103,14 @@ export default function CustomSidebar(props: CustomSidebarProps) {
             <Text style={styles.menuIcon}>⚙️</Text>
             <Text style={styles.menuText}>Settings</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.menuItem}
+            onPress={() => navigateToScreen('Import')}
+          >
+            <Text style={styles.menuIcon}>📥</Text>
+            <Text style={styles.menuText}>Import Data</Text>
+          </TouchableOpacity>
         </View>
 
         <Divider style={styles.divider} />
