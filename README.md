@@ -214,8 +214,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 **Amal Reji Nair**
 
-- GitHub: [@amalrejinair](https://github.com/amalrejinair)
-- LinkedIn: [Amal Reji Nair](https://linkedin.com/in/amalrejinair)
+- GitHub: [@amalrejinair](https://github.com/mythicavalon)
+- LinkedIn: [Amal Reji Nair](https://www.linkedin.com/in/amal080/)
 
 ## 🙏 Acknowledgments
 
