@@ -10,6 +10,7 @@ node_modules/
 dist/
 !dist/*.md5
 !dist/*.md
+!dist/*.zip
 web-build/
 
 # Native
