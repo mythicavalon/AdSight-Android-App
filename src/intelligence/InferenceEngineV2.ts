@@ -34,6 +34,15 @@ function textMatches(text: string, keyword: string): boolean {
   return needle.length > 0 && haystack.includes(needle);
 }
 
+function signalKey(signal: InferenceSignal): string {
+  return `${signal.type}:${signal.value.trim().toLowerCase()}`;
+}
+
+function repetitionMultiplier(signal: InferenceSignal, counts: Map<string, number>): number {
+  const count = counts.get(signalKey(signal)) || 1;
+  return Math.min(1.4, 1 + Math.max(0, count - 1) * 0.1);
+}
+
 function toSignals(profile: UserProfile): InferenceSignal[] {
   const signals: InferenceSignal[] = [];
   let index = 0;
@@ -106,7 +115,7 @@ function evidenceExplanation(type: InferenceSignal['type'], contribution: number
     case 'ad_preference':
       return `An explicitly provided preference ${direction} this category.`;
     case 'search':
-      return `Search activity ${direction} this category, with recency applied.`;
+      return `Search activity ${direction} this category, with recency and repetition applied.`;
     case 'app_usage':
       return `App usage context ${direction} this category.`;
     default:
@@ -122,20 +131,27 @@ export class InferenceEngineV2 {
     if (!mapping) throw new Error(`Unsupported platform: ${platform}`);
 
     const signals = toSignals(profile);
+    const repetitionCounts = signals.reduce((counts, signal) => {
+      const key = signalKey(signal);
+      counts.set(key, (counts.get(key) || 0) + 1);
+      return counts;
+    }, new Map<string, number>());
+
     const results: InferenceResult[] = mapping.categories.map((category) => {
       const evidence: EvidenceItem[] = [];
       let rawScore = 0;
-      const matchedSignalIds = new Set<string>();
 
       signals.forEach((signal) => {
         const matched = category.keywords.some((keyword) => textMatches(signal.value, keyword));
         if (!matched) return;
 
         const recency = recencyMultiplier(signal.timestamp, now, signal.type === 'purchase' ? 90 : 30);
-        const repetitionBoost = matchedSignalIds.has(signal.id) ? 1 : 1;
-        const contribution = TYPE_WEIGHT[signal.type] * normalizedStrength(signal.strength) * recency * repetitionBoost;
+        const repetition = repetitionMultiplier(signal, repetitionCounts);
+        const contribution = TYPE_WEIGHT[signal.type]
+          * normalizedStrength(signal.strength)
+          * recency
+          * repetition;
         rawScore += contribution;
-        matchedSignalIds.add(signal.id);
 
         evidence.push({
           signalId: signal.id,
