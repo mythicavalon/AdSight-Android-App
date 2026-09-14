@@ -4,14 +4,14 @@ import { Button, Card, Chip, Paragraph, ProgressBar, Text, Title } from 'react-n
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 
-import { InferenceEngineV2, InferenceResult } from '../intelligence';
+import { InferenceEngineV2 } from '../intelligence';
+import type { InferenceResult } from '../intelligence';
 import { Platform, UserProfile, MainDrawerParamList } from '../types';
 import { profileRepository } from '../storage';
 import { theme } from '../theme/theme';
 
 type DashboardRouteProp = RouteProp<MainDrawerParamList, 'Dashboard'>;
 type DashboardNavigationProp = DrawerNavigationProp<MainDrawerParamList, 'Dashboard'>;
-
 const inferenceEngine = new InferenceEngineV2();
 
 const platforms: Array<{ id: Platform; label: string }> = [
@@ -39,12 +39,7 @@ export default function DashboardScreen() {
     try {
       const storedProfile = await profileRepository.get();
       setProfile(storedProfile);
-      if (storedProfile) {
-        const results = inferenceEngine.generate(storedProfile, selectedPlatform).results;
-        setTopResult(results[0] ?? null);
-      } else {
-        setTopResult(null);
-      }
+      setTopResult(storedProfile ? inferenceEngine.generate(storedProfile, selectedPlatform).results[0] ?? null : null);
     } catch (cause) {
       console.error('Dashboard load failed:', cause);
       setError('AdSight could not load your local profile.');
@@ -68,129 +63,63 @@ export default function DashboardScreen() {
     void load();
   };
 
-  if (loading) {
-    return (
-      <View style={styles.center}>
-        <ProgressBar indeterminate style={styles.loadingBar} />
-        <Text style={styles.muted}>Loading your local profile...</Text>
-      </View>
-    );
-  }
+  if (loading) return <View style={styles.center}><ProgressBar indeterminate style={styles.loadingBar} /><Text style={styles.muted}>Loading your local profile...</Text></View>;
 
-  if (error) {
-    return (
-      <View style={styles.center}>
-        <Title style={styles.title}>Something went wrong</Title>
-        <Paragraph style={styles.muted}>{error}</Paragraph>
-        <Button mode="contained" onPress={refresh}>Try again</Button>
-      </View>
-    );
-  }
+  if (error) return <View style={styles.center}><Title style={styles.title}>Something went wrong</Title><Paragraph style={styles.muted}>{error}</Paragraph><Button mode="contained" onPress={refresh}>Try again</Button></View>;
 
   if (!profile) {
-    return (
-      <ScrollView contentContainerStyle={styles.empty}>
-        <Card style={styles.card}>
-          <Card.Content>
-            <Title style={styles.title}>Start with your data</Title>
-            <Paragraph style={styles.muted}>
-              AdSight needs data you choose to provide before it can estimate advertising interests.
-              Nothing is silently simulated or added for you.
-            </Paragraph>
-            <Button mode="contained" onPress={() => navigation.navigate('DataInput')}>
-              Create your profile
-            </Button>
-            <Button mode="outlined" onPress={() => navigation.navigate('Import')} style={styles.secondaryButton}>
-              Import data
-            </Button>
-          </Card.Content>
-        </Card>
-      </ScrollView>
-    );
+    return <ScrollView contentContainerStyle={styles.empty}>
+      <Card style={styles.card}><Card.Content>
+        <Title style={styles.title}>Start with your data</Title>
+        <Paragraph style={styles.muted}>AdSight needs data you choose to provide before it can estimate advertising interests. Nothing is silently simulated or added for you.</Paragraph>
+        <Button mode="contained" onPress={() => navigation.navigate('DataInput')}>Create your profile</Button>
+        <Button mode="outlined" onPress={() => navigation.navigate('Import')} style={styles.secondaryButton}>Import data</Button>
+      </Card.Content></Card>
+    </ScrollView>;
   }
 
   const signalCount = profile.interests.length + profile.installedApps.length + profile.searches.length + profile.purchases.length;
 
-  return (
-    <View style={styles.container}>
-      <ScrollView
-        contentContainerStyle={styles.content}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}
-      >
-        <Title style={styles.title}>Advertising Profile</Title>
-        <Paragraph style={styles.muted}>
-          Local estimates based only on information you chose to provide.
-        </Paragraph>
+  return <View style={styles.container}>
+    <ScrollView contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}>
+      <Title style={styles.title}>Advertising Profile</Title>
+      <Paragraph style={styles.muted}>Local estimates based only on information you chose to provide.</Paragraph>
 
-        <Card style={styles.card}>
-          <Card.Content>
-            <Text style={styles.profileName}>{profile.name}</Text>
-            <View style={styles.stats}>
-              <Text style={styles.stat}>Signals {signalCount}</Text>
-              <Text style={styles.stat}>Interests {profile.interests.length}</Text>
-              <Text style={styles.stat}>Searches {profile.searches.length}</Text>
-              <Text style={styles.stat}>Purchases {profile.purchases.length}</Text>
-            </View>
-          </Card.Content>
-        </Card>
+      <Card style={styles.card}><Card.Content>
+        <Text style={styles.profileName}>{profile.name}</Text>
+        <View style={styles.stats}>
+          <Text style={styles.stat}>Signals {signalCount}</Text>
+          <Text style={styles.stat}>Interests {profile.interests.length}</Text>
+          <Text style={styles.stat}>Searches {profile.searches.length}</Text>
+          <Text style={styles.stat}>Purchases {profile.purchases.length}</Text>
+        </View>
+      </Card.Content></Card>
 
-        <Title style={styles.sectionTitle}>Platform</Title>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-          {platforms.map((platform) => (
-            <Chip
-              key={platform.id}
-              selected={selectedPlatform === platform.id}
-              onPress={() => setSelectedPlatform(platform.id)}
-              accessibilityLabel={`View ${platform.label} estimate`}
-            >
-              {platform.label}
-            </Chip>
-          ))}
-        </ScrollView>
-
-        {topResult ? (
-          <Card style={styles.card}>
-            <Card.Content>
-              <Text style={styles.overline}>TOP LOCAL ESTIMATE</Text>
-              <Title style={styles.resultTitle}>{topResult.categoryName}</Title>
-              <Text style={styles.signalStrength}>Signal strength {Math.round(topResult.score * 100)}%</Text>
-              <ProgressBar progress={topResult.score} style={styles.progress} />
-              <Text style={styles.muted}>
-                Confidence {Math.round(topResult.confidence * 100)}% · Data quality {Math.round(topResult.dataQuality * 100)}%
-              </Text>
-              <Paragraph style={styles.explanation}>
-                {topResult.evidence[0]?.explanation ?? 'No supporting evidence was found for this estimate.'}
-              </Paragraph>
-              <Button mode="contained" onPress={() => navigation.navigate('Evidence')}>
-                Inspect evidence
-              </Button>
-            </Card.Content>
-          </Card>
-        ) : (
-          <Card style={styles.card}>
-            <Card.Content>
-              <Title style={styles.resultTitle}>Not enough evidence yet</Title>
-              <Paragraph style={styles.muted}>
-                Add more interests, searches, purchases, or platform preferences to produce a useful estimate.
-              </Paragraph>
-              <Button mode="contained" onPress={() => navigation.navigate('DataInput')}>
-                Add data
-              </Button>
-            </Card.Content>
-          </Card>
-        )}
-
-        <Card style={styles.noteCard}>
-          <Card.Content>
-            <Text style={styles.noteTitle}>What this means</Text>
-            <Paragraph style={styles.muted}>
-              AdSight estimates what could be inferred from your available data. It does not see a platform's private advertiser targeting system.
-            </Paragraph>
-          </Card.Content>
-        </Card>
+      <Title style={styles.sectionTitle}>Platform</Title>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+        {platforms.map((platform) => <Chip key={platform.id} selected={selectedPlatform === platform.id} onPress={() => setSelectedPlatform(platform.id)} accessibilityLabel={`View ${platform.label} estimate`}>{platform.label}</Chip>)}
       </ScrollView>
-    </View>
-  );
+
+      {topResult ? <Card style={styles.card}><Card.Content>
+        <Text style={styles.overline}>TOP LOCAL ESTIMATE</Text>
+        <Title style={styles.resultTitle}>{topResult.categoryName}</Title>
+        <Text style={styles.signalStrength}>Signal strength {Math.round(topResult.score * 100)}%</Text>
+        <ProgressBar progress={topResult.score} style={styles.progress} />
+        <Text style={styles.muted}>Confidence {Math.round(topResult.confidence * 100)}% · Data quality {Math.round(topResult.dataQuality * 100)}%</Text>
+        <Paragraph style={styles.explanation}>{topResult.evidence[0]?.explanation ?? 'No supporting evidence was found for this estimate.'}</Paragraph>
+        <Button mode="contained" onPress={() => navigation.navigate('Evidence')}>Inspect evidence</Button>
+      </Card.Content></Card> : <Card style={styles.card}><Card.Content>
+        <Title style={styles.resultTitle}>Not enough evidence yet</Title>
+        <Paragraph style={styles.muted}>Add more interests, searches, purchases, or platform preferences to produce a useful estimate.</Paragraph>
+        <Button mode="contained" onPress={() => navigation.navigate('DataInput')}>Add data</Button>
+      </Card.Content></Card>}
+
+      <Card style={styles.noteCard}><Card.Content>
+        <Text style={styles.noteTitle}>What this means</Text>
+        <Paragraph style={styles.muted}>AdSight estimates what could be inferred from your available data. It does not see a platform's private advertiser targeting system.</Paragraph>
+      </Card.Content></Card>
+    </ScrollView>
+  </View>;
 }
 
 const styles = StyleSheet.create({
