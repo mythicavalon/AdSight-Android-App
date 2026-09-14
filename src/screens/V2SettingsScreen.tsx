@@ -52,7 +52,7 @@ export default function V2SettingsScreen() {
         <Paragraph style={styles.muted}>
           Profile data is stored in the local encrypted database. Its key is protected by platform secure storage.
         </Paragraph>
-        <Button mode="contained" onPress={() => navigation.navigate('Dashboard')}>Back to profile</Button>
+        <Button mode="contained" onPress={() => navigation.navigate({ name: 'Dashboard' })}>Back to profile</Button>
       </Card.Content></Card>
 
       <Card style={styles.dangerCard}><Card.Content>
