@@ -14,7 +14,7 @@ import {
   InferenceSnapshot,
 } from './v2Types';
 
-const MODEL_VERSION = 'v2.0.0-evidence';
+const MODEL_VERSION = '2.1.0-evidence';
 
 const TYPE_WEIGHT: Record<InferenceSignal['type'], number> = {
   interest: 1.0,
@@ -58,12 +58,12 @@ function toSignals(profile: UserProfile): InferenceSignal[] {
     });
   });
 
-  (Object.keys(profile.adPreferences) as Platform[]).forEach((platform) => {
-    (profile.adPreferences[platform] || []).forEach((value) => {
+  (Object.keys(profile.adPreferences) as Platform[]).forEach((preferencePlatform) => {
+    (profile.adPreferences[preferencePlatform] || []).forEach((value) => {
       signals.push({
-        id: stableId(`preference_${platform}`, index++),
+        id: stableId(`preference_${preferencePlatform}`, index++),
         type: 'ad_preference',
-        source: `${platform} preference`,
+        source: `${preferencePlatform} preference`,
         value,
         timestamp: profile.lastUpdated,
         strength: 1,
@@ -107,6 +107,19 @@ function toSignals(profile: UserProfile): InferenceSignal[] {
   return signals;
 }
 
+function platformMultiplier(signal: InferenceSignal, platform: Platform): number {
+  if (signal.type === 'ad_preference') {
+    return signal.source.startsWith(`${platform} `) ? 1 : 0;
+  }
+
+  if (signal.type === 'search' || signal.type === 'purchase') {
+    const sourcePlatform = signal.source.split(' ')[0];
+    return sourcePlatform === platform ? 1.15 : 0.75;
+  }
+
+  return 1;
+}
+
 function evidenceExplanation(type: InferenceSignal['type'], contribution: number): string {
   const direction = contribution >= 0 ? 'supports' : 'does not support';
   switch (type) {
@@ -115,7 +128,7 @@ function evidenceExplanation(type: InferenceSignal['type'], contribution: number
     case 'ad_preference':
       return `An explicitly provided preference ${direction} this category.`;
     case 'search':
-      return `Search activity ${direction} this category, with recency and repetition applied.`;
+      return `Search activity ${direction} this category, with platform context, recency, and repetition applied.`;
     case 'app_usage':
       return `App usage context ${direction} this category.`;
     default:
@@ -142,6 +155,9 @@ export class InferenceEngineV2 {
       let rawScore = 0;
 
       signals.forEach((signal) => {
+        const platformWeight = platformMultiplier(signal, platform);
+        if (platformWeight === 0) return;
+
         const matched = category.keywords.some((keyword) => textMatches(signal.value, keyword));
         if (!matched) return;
 
@@ -150,7 +166,8 @@ export class InferenceEngineV2 {
         const contribution = TYPE_WEIGHT[signal.type]
           * normalizedStrength(signal.strength)
           * recency
-          * repetition;
+          * repetition
+          * platformWeight;
         rawScore += contribution;
 
         evidence.push({
