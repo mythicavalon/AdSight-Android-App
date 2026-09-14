@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   typecheck:
-    name: TypeScript
+    name: TypeScript and Expo validation
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -19,12 +19,16 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22.13.1
           cache: npm
       - name: Install dependencies
         run: npm ci
       - name: Typecheck
         run: npm run typecheck
+      - name: Expo dependency check
+        run: npx expo install --check
+      - name: Expo Doctor
+        run: npx expo-doctor
       - name: Expo config check
         run: npx expo config --type public
 
@@ -38,7 +42,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22.13.1
           cache: npm
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -47,15 +51,19 @@ jobs:
           java-version: 17
       - name: Install dependencies
         run: npm ci
-      - name: Generate native project
-        run: npx expo prebuild --non-interactive --platform android
+      - name: Generate clean native project
+        run: npx expo prebuild --clean --non-interactive --platform android
       - name: Build release APK
         working-directory: android
         run: ./gradlew assembleRelease --no-daemon
-      - name: Upload APK
+      - name: Create APK checksum
+        run: sha256sum android/app/build/outputs/apk/release/app-release.apk > android/app/build/outputs/apk/release/app-release.apk.sha256
+      - name: Upload APK and checksum
         uses: actions/upload-artifact@v4
         with:
           name: AdSight-android-preview
-          path: android/app/build/outputs/apk/release/app-release.apk
+          path: |
+            android/app/build/outputs/apk/release/app-release.apk
+            android/app/build/outputs/apk/release/app-release.apk.sha256
           if-no-files-found: error
           retention-days: 14
