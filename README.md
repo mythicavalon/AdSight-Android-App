@@ -1,239 +1,199 @@
-# AdSight 📊
+# AdSight
 
-**Privacy-First Ad Prediction Tool**
+**See what advertisers can infer about you.**
 
-A zero-cost, fully offline React Native mobile app that predicts likely advertisements you might see on various platforms using your user-provided data. All processing happens locally on your device to ensure complete privacy.
+AdSight is a privacy-first Android app for exploring advertising interests and audience categories that can be inferred from data you choose to provide.
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Platform](https://img.shields.io/badge/platform-Android%20%7C%20iOS-lightgrey.svg)
-![React Native](https://img.shields.io/badge/React%20Native-0.72-blue.svg)
-![Expo](https://img.shields.io/badge/Expo-49.0-black.svg)
+> **Private. Local. Explainable.**
 
-## 🌟 Features
+## What AdSight does
 
-### Core Functionality
-- **🔒 100% Offline & Private** - All data stays on your device
-- **💰 Zero Cost** - Completely free forever
-- **🧠 AI-Powered Predictions** - Uses local ML for ad category predictions
-- **📱 Multi-Platform Support** - Predictions for Facebook, Instagram, Google, YouTube, TikTok, LinkedIn, and Amazon
-- **🎯 Personalized Insights** - Tailored predictions based on your interests and behavior
+AdSight turns user-provided signals into transparent, evidence-backed advertising inferences. It helps you understand how ordinary activity can contribute to an advertising profile without pretending to have access to private advertiser systems.
 
-### Privacy & Security
-- **No Network Connections** - Operates entirely offline
-- **Local Data Storage** - All information stored on device using AsyncStorage
-- **Explicit Consent** - Clear privacy explanations and user consent
-- **Data Control** - Full control over your data with export and delete options
+### Core capabilities
 
-### Advanced Features
-- **📊 Analytics Dashboard** - Detailed insights into prediction confidence and trends
-- **🔄 Profile Updates** - Monthly reminders to refresh your data (optional)
-- **📋 Multiple Data Sources** - Support for interests, search history, purchase data, and app usage
-- **📈 Trend Analysis** - Visualize prediction patterns across platforms
-- **💾 Data Export** - Export your predictions and analytics
+- **Advertising profile**: See categories AdSight infers from your signals.
+- **Evidence**: Understand which signals contributed to an inference.
+- **Confidence and uncertainty**: Distinguish stronger evidence from weaker or incomplete evidence.
+- **Platform views**: Explore platform-specific prediction models without claiming access to internal targeting data.
+- **What changed**: Track how your inferred profile changes as your data changes.
+- **What if?**: Experiment with hypothetical signals before adding them to your real profile.
+- **Data import**: Bring in data exports you own and choose to analyze.
+- **Privacy controls**: Keep your profile local and control what you provide.
 
-## 🚀 Getting Started
+## Important distinction
 
-### Prerequisites
-- Node.js (v16 or higher)
-- npm or yarn
-- Expo CLI
-- Android Studio (for Android development) or Xcode (for iOS development)
+AdSight is an **inference and education tool**, not an advertiser API.
 
-### Installation
+It does not claim to know the private targeting profile maintained by Google, Meta, TikTok, Amazon, LinkedIn, or any other platform. Unless a platform export explicitly provides a fact, AdSight labels its output as an **AdSight inference** rather than attributing it to that platform.
 
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/your-username/AdSight.git
-   cd AdSight
-   ```
+Signals are kept separate from conclusions:
 
-2. **Install dependencies**
-   ```bash
-   npm install
-   ```
+| Layer | Meaning |
+| --- | --- |
+| **Observed** | Data you explicitly provide or import. |
+| **Inferred** | Categories AdSight calculates from observed signals. |
+| **Platform claimed** | Information explicitly contained in a platform-owned export, when available. |
 
-3. **Start the development server**
-   ```bash
-   npx expo start
-   ```
+## Privacy by design
 
-4. **Run on device/emulator**
-   - For Android: `npm run android`
-   - For iOS: `npm run ios`
-   - For web: `npm run web`
+AdSight is built around local-first processing.
 
-### Building APK
+- No account is required for the core experience.
+- User-provided profile data is intended to remain on the device.
+- Data import is initiated by the user.
+- No scraping, accessibility surveillance, VPN interception, or screen scraping is required for the core product.
+- Android storage access should use scoped document access instead of broad legacy storage permissions.
+- Analytics and advertising SDKs should not be added without an explicit privacy review.
 
-To build a standalone APK:
+**Privacy claims in this repository describe product intent and implementation targets, not legal advice or a certification.** Verify actual network behavior, permissions, Play Data Safety declarations, and the privacy policy before publishing a release.
+
+## How the inference model works
+
+AdSight uses a transparent scoring approach rather than presenting an opaque model as fact.
+
+Signals can receive different weights depending on type, recency, repetition, and corroboration. A recent repeated search can provide stronger evidence than an old single signal. Multiple independent signals pointing toward the same category can increase evidence strength.
+
+A prediction should expose:
+
+- category score;
+- supporting evidence;
+- model confidence;
+- data quality and coverage;
+- model version.
+
+These values are estimates produced by AdSight. They are not probabilities supplied by an advertising platform and are not a guarantee that an ad will be shown.
+
+## Supported platform models
+
+The current product includes models for Facebook, Instagram, Google, YouTube, TikTok, LinkedIn, and Amazon.
+
+Platform models are heuristic and educational unless backed by user-provided platform data. Platform names identify the context being modeled, not access to proprietary targeting systems.
+
+## V2 architecture
+
+V2 separates the user interface, application services, data storage, and inference system:
+
+```text
+UI
+ ↓
+Application services
+ ↓
+Signal repository
+ ↓
+Inference engine
+ ├── feature extraction
+ ├── recency weighting
+ ├── scoring
+ ├── confidence calibration
+ └── explanations
+ ↓
+History / evidence
+```
+
+Structured profile and signal data is being moved toward SQLite-based storage. Encryption is planned for production database storage where supported. Small secrets should use secure platform storage rather than general-purpose key-value storage.
+
+## Project status
+
+AdSight is under active V2 development. The repository contains the working V1 application plus foundations for a more rigorous local inference architecture.
+
+The priority is **trustworthy product behavior over exaggerated AI claims**: clear evidence, reproducible scoring, useful explanations, safe data handling, and reliable builds.
+
+## Development
+
+### Requirements
+
+- Node.js compatible with the selected Expo SDK
+- npm
+- Android Studio for native Android development
+- Expo EAS for cloud builds
+
+### Install
 
 ```bash
-# Install EAS CLI if you haven't already
-npm install -g @expo/eas-cli
-
-# Configure build
-eas build:configure
-
-# Build for Android
-eas build --platform android
+git clone https://github.com/mythicavalon/AdSight-Android-App.git
+cd AdSight-Android-App
+npm install
 ```
 
-## 📱 How It Works
+### Run
 
-### 1. Onboarding & Consent
-- Welcome screen explaining AdSight's purpose
-- Detailed privacy policy and explicit consent
-- Clear explanation of data collection and usage
-
-### 2. Data Input
-- **Interests**: Manually add topics you're interested in
-- **Ad Preferences**: Import or manually enter ad categories from platforms
-- **Search History**: Add search queries for better predictions
-- **Purchase History**: Include past purchases for shopping-related predictions
-- **App Usage**: Optional app usage statistics (simulated for demo)
-
-### 3. Prediction Engine
-The app uses a sophisticated local prediction engine that:
-- Analyzes your input data against platform-specific ad category mappings
-- Applies weighted scoring based on data type and relevance
-- Uses probabilistic rules to enhance prediction accuracy
-- Generates confidence scores and reasoning for each prediction
-
-### 4. Dashboard & Analytics
-- **Platform Selection**: Choose any supported platform to view predictions
-- **Confidence Scores**: See how confident the predictions are
-- **Ad Categories**: View predicted ad categories with examples
-- **Analytics**: Deep insights into prediction quality and trends
-
-## 🏗️ Project Structure
-
+```bash
+npx expo start
 ```
-AdSight/
+
+For Android:
+
+```bash
+npm run android
+```
+
+For a production Android build:
+
+```bash
+npm run build:android
+```
+
+> Native modules used by later V2 milestones may require an Expo development build rather than Expo Go.
+
+## Repository structure
+
+```text
+AdSight-Android-App/
 ├── src/
-│   ├── components/          # Reusable UI components
-│   │   └── CustomSidebar.tsx
-│   ├── data/               # JSON data files
-│   │   └── adMappings.json
-│   ├── screens/            # App screens
-│   │   ├── WelcomeScreen.tsx
-│   │   ├── ConsentScreen.tsx
-│   │   ├── DashboardScreen.tsx
-│   │   ├── DataInputScreen.tsx
-│   │   ├── SettingsScreen.tsx
-│   │   └── AnalyticsScreen.tsx
-│   ├── services/           # Business logic
-│   │   └── PredictionEngine.ts
-│   ├── theme/              # App theming
-│   │   └── theme.ts
-│   ├── types/              # TypeScript definitions
-│   │   └── index.ts
-│   └── utils/              # Utility functions
-├── assets/                 # Images and static files
-├── App.tsx                 # Main app component
+│   ├── components/       # Reusable UI components
+│   ├── data/             # Taxonomies and platform mappings
+│   ├── screens/           # App screens
+│   ├── services/         # Application services
+│   ├── theme/            # UI theme
+│   └── types/             # TypeScript types
+├── assets/                # App assets
+├── App.tsx                # Application entry point
 ├── app.json               # Expo configuration
-├── package.json
-├── LICENSE
+├── package.json           # Dependencies and scripts
+├── eas.json               # EAS build profiles
 └── README.md
 ```
 
-## 🔧 Technology Stack
+## Roadmap
 
-- **Framework**: React Native with Expo
-- **Navigation**: React Navigation v6
-- **UI Library**: React Native Paper
-- **State Management**: React Hooks + AsyncStorage
-- **Machine Learning**: TensorFlow.js (for future enhancements)
-- **Data Storage**: AsyncStorage (local)
-- **Notifications**: Expo Notifications
-- **Build System**: Expo EAS Build
+### V2 foundation
 
-## 📊 Supported Platforms
+- [x] Establish evidence-based inference direction
+- [x] Define normalized signal and inference model
+- [x] Define recency-aware scoring
+- [ ] Complete SQLite migration
+- [ ] Add encrypted local database for production builds
+- [ ] Add model versioning and calibration
 
-AdSight provides predictions for the following platforms:
+### Product
 
-| Platform | Categories | Features |
-|----------|------------|----------|
-| **Facebook** | Fashion, Technology, Food, Travel, Fitness, Education | Profile-based targeting |
-| **Instagram** | Fashion & Beauty, Lifestyle, Food, Travel, Fitness | Visual content focus |
-| **Google Search** | Shopping, Local Services, Education, Technology, Finance | Search intent analysis |
-| **YouTube** | Entertainment, Education, Technology, Lifestyle, Gaming | Video content preferences |
-| **TikTok** | Trending Products, Beauty, Fashion, Food, Lifestyle | Viral content trends |
-| **LinkedIn** | Professional Development, Business, Education, Finance | Career-focused targeting |
-| **Amazon** | Electronics, Home & Garden, Books, Fashion, Health | Purchase history analysis |
+- [ ] Advertising Profile
+- [ ] Evidence Explorer
+- [ ] What Changed
+- [ ] What If simulations
+- [ ] Prediction History
+- [ ] Prediction feedback and evaluation
+- [ ] Privacy Center
+- [ ] Improved user-owned data imports
 
-## 🔒 Privacy Policy
+### Production
 
-AdSight is built with privacy as the core principle:
+- [ ] Automated TypeScript and lint checks
+- [ ] Unit and integration test coverage
+- [ ] Android release validation
+- [ ] Privacy/network regression checks
+- [ ] Accurate Play Store Data Safety documentation
+- [ ] Final privacy policy and legal review
 
-### Data Collection
-- **Personal Interests**: Only what you manually provide
-- **Ad Preferences**: Exported data from platforms (optional)
-- **Search History**: User-provided search queries (optional)
-- **Purchase History**: User-provided purchase information (optional)
-- **App Usage**: Simulated data for demonstration purposes
+## Contributing
 
-### Data Usage
-- **Prediction Generation**: To create personalized ad predictions
-- **Analytics**: To provide insights into prediction quality
-- **Improvement**: To enhance prediction accuracy over time
+Issues and pull requests are welcome. Please keep the local-first privacy model intact and avoid adding telemetry, advertising SDKs, data uploads, scraping, or surveillance-style collection without a documented privacy review.
 
-### Data Protection
-- **Local Storage**: All data remains on your device
-- **No Transmission**: Zero network communication for data processing
-- **User Control**: Full control over data deletion and export
-- **Explicit Consent**: Clear consent for all data collection
+## License
 
-## 🤝 Contributing
-
-We welcome contributions to AdSight! Please follow these steps:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
-### Development Guidelines
-- Follow TypeScript best practices
-- Use React Native Paper components for UI consistency
-- Ensure all features work offline
-- Add proper error handling
-- Write clear commit messages
-- Update documentation as needed
-
-## 🐛 Bug Reports & Feature Requests
-
-Please use GitHub Issues to report bugs or request features:
-- **Bug Reports**: Include device info, steps to reproduce, and expected vs actual behavior
-- **Feature Requests**: Describe the feature and its use case clearly
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 👨‍💻 Author
-
-**Amal Reji Nair**
-
-- GitHub: [@amalrejinair](https://github.com/mythicavalon)
-- LinkedIn: [Amal Reji Nair](https://www.linkedin.com/in/amal080/)
-
-## 🙏 Acknowledgments
-
-- React Native and Expo teams for the excellent development platform
-- React Native Paper for the beautiful UI components
-- The open-source community for inspiration and resources
-
-## 📊 Roadmap
-
-- [ ] **Enhanced ML Models**: More sophisticated prediction algorithms
-- [ ] **Export Formats**: PDF and CSV export options
-- [ ] **Profile Comparison**: Compare multiple user profiles
-- [ ] **Prediction History**: Track prediction accuracy over time
-- [ ] **Custom Rules**: User-defined prediction rules
-- [ ] **Platform Updates**: Support for additional platforms
-- [ ] **Visualization**: Advanced charts and graphs
-- [ ] **Batch Processing**: Bulk data import capabilities
+MIT. See `LICENSE`.
 
 ---
 
-**Built with ❤️ for Privacy** • **100% Offline** • **Zero Cost** • **Open Source**
+**AdSight: Private. Local. Explainable.**
