@@ -97,15 +97,13 @@ export default function App() {
     <PaperProvider theme={theme}>
       <NavigationContainer>
         <StatusBar style="auto" />
-        <Stack.Navigator screenOptions={{ headerShown: false }}>
-          {!hasCompletedOnboarding ? (
-            <>
-              <Stack.Screen name="Welcome" component={WelcomeScreen} />
-              <Stack.Screen name="Consent" component={ConsentScreen} />
-            </>
-          ) : (
-            <Stack.Screen name="Main" component={MainAppNavigator} />
-          )}
+        <Stack.Navigator
+          initialRouteName={hasCompletedOnboarding ? 'Main' : 'Welcome'}
+          screenOptions={{ headerShown: false }}
+        >
+          <Stack.Screen name="Welcome" component={WelcomeScreen} />
+          <Stack.Screen name="Consent" component={ConsentScreen} />
+          <Stack.Screen name="Main" component={MainAppNavigator} />
         </Stack.Navigator>
       </NavigationContainer>
     </PaperProvider>
