@@ -4,6 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { StatusBar } from 'expo-status-bar';
 import { Provider as PaperProvider } from 'react-native-paper';
+import { ActivityIndicator, Text, View } from 'react-native';
 
 import { NotificationService } from './src/services/NotificationService';
 import { getDatabase } from './src/storage/Database';
@@ -17,6 +18,7 @@ import SettingsScreen from './src/screens/SettingsScreen';
 import AnalyticsScreen from './src/screens/AnalyticsScreen';
 import CustomSidebar from './src/components/CustomSidebar';
 import ImportDataScreen from './src/screens/ImportDataScreen';
+import EvidenceExplorerScreen from './src/screens/EvidenceExplorerScreen';
 
 import { theme } from './src/theme/theme';
 
@@ -35,6 +37,7 @@ function MainAppNavigator() {
       }}
     >
       <Drawer.Screen name="Dashboard" component={DashboardScreen} options={{ title: 'AdSight Dashboard' }} />
+      <Drawer.Screen name="Evidence" component={EvidenceExplorerScreen} options={{ title: 'Evidence Explorer' }} />
       <Drawer.Screen name="DataInput" component={DataInputScreen} options={{ title: 'Data Input' }} />
       <Drawer.Screen name="Analytics" component={AnalyticsScreen} options={{ title: 'Analytics' }} />
       <Drawer.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
@@ -53,14 +56,11 @@ export default function App() {
 
     const initializeApp = async () => {
       try {
-        // Opening the database also runs all pending migrations before the UI is shown.
         await getDatabase();
         const onboardingComplete = await settingsRepository.getBoolean('onboarding_complete');
 
         if (!mounted) return;
         setHasCompletedOnboarding(onboardingComplete);
-
-        // Notifications are optional and must never block the core app.
         void NotificationService.getInstance().initialize();
       } catch (error) {
         console.error('Error initializing AdSight:', error);
@@ -77,14 +77,23 @@ export default function App() {
   }, []);
 
   if (isLoading) {
-    return null;
+    return (
+      <PaperProvider theme={theme}>
+        <View style={styles.startupState}>
+          <ActivityIndicator size="large" color={theme.colors.primary} />
+          <Text style={styles.startupText}>Preparing your private workspace…</Text>
+        </View>
+      </PaperProvider>
+    );
   }
 
   if (startupError) {
     return (
       <PaperProvider theme={theme}>
-        <StatusBar style="light" backgroundColor={theme.colors.primary} />
-        <WelcomeScreen />
+        <View style={styles.startupState}>
+          <Text style={styles.startupTitle}>AdSight could not start</Text>
+          <Text style={styles.startupText}>{startupError}</Text>
+        </View>
       </PaperProvider>
     );
   }
@@ -107,3 +116,26 @@ export default function App() {
     </PaperProvider>
   );
 }
+
+const styles = {
+  startupState: {
+    flex: 1,
+    alignItems: 'center' as const,
+    justifyContent: 'center' as const,
+    padding: 24,
+    backgroundColor: theme.colors.background,
+  },
+  startupTitle: {
+    color: theme.colors.text,
+    fontSize: 22,
+    fontWeight: '700' as const,
+    textAlign: 'center' as const,
+    marginBottom: 8,
+  },
+  startupText: {
+    color: theme.colors.text,
+    opacity: 0.72,
+    textAlign: 'center' as const,
+    marginTop: 12,
+  },
+};
