@@ -1,25 +1,13 @@
 import React, { useState } from 'react';
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  Alert,
-} from 'react-native';
-import {
-  Text,
-  Button,
-  Card,
-  Title,
-  Paragraph,
-  Checkbox,
-  Divider,
-} from 'react-native-paper';
+import { View, StyleSheet, ScrollView, Alert } from 'react-native';
+import { Text, Button, Card, Title, Paragraph, Checkbox, Divider } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { RootStackParamList } from '../types';
 import { theme } from '../theme/theme';
+import { settingsRepository } from '../storage/SettingsRepository';
+import { NotificationService } from '../services/NotificationService';
 
 type ConsentScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Consent'>;
 
@@ -35,24 +23,25 @@ export default function ConsentScreen() {
       Alert.alert(
         'Consent Required',
         'You must accept the required privacy terms to continue using AdSight.',
-        [{ text: 'OK' }]
+        [{ text: 'OK' }],
       );
       return;
     }
 
     try {
       setSubmitting(true);
-      // Navigate immediately for responsiveness
+      await settingsRepository.setBoolean('onboarding_complete', true);
+      await settingsRepository.setString('consent_timestamp', new Date().toISOString());
+      await settingsRepository.setBoolean('update_reminders_enabled', updateReminderConsent);
+
+      if (updateReminderConsent) {
+        await NotificationService.getInstance().scheduleProfileUpdateReminder();
+      }
+
       navigation.reset({ index: 0, routes: [{ name: 'Main' as never }] });
-      // Persist settings in background
-      await AsyncStorage.multiSet([
-        ['onboarding_complete', 'true'],
-        ['consent_timestamp', new Date().toISOString()],
-        ['update_reminders_enabled', updateReminderConsent.toString()],
-      ]);
     } catch (error) {
       console.error('Error saving consent:', error);
-      Alert.alert('Error', 'Failed to save consent. Please try again.');
+      Alert.alert('Error', 'Failed to save your privacy choices. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -61,70 +50,43 @@ export default function ConsentScreen() {
   const handleDeclineConsent = () => {
     Alert.alert(
       'AdSight Requires Consent',
-      'AdSight requires your consent to process data locally for ad predictions. Without this consent, the app cannot function. Would you like to review the privacy terms again?',
+      'AdSight requires your consent to process data locally for ad analysis. Without this consent, the app cannot function. Would you like to review the privacy terms again?',
       [
-        {
-          text: 'Exit App',
-          style: 'destructive',
-          onPress: () => {
-            navigation.goBack();
-          },
-        },
-        {
-          text: 'Review Terms',
-          style: 'default',
-        },
-      ]
+        { text: 'Exit App', style: 'destructive', onPress: () => navigation.goBack() },
+        { text: 'Review Terms', style: 'default' },
+      ],
     );
   };
 
   return (
-    <LinearGradient
-      colors={[theme.colors.primary, theme.colors.secondary]}
-      style={styles.container}
-    >
+    <LinearGradient colors={[theme.colors.primary, theme.colors.secondary]} style={styles.container}>
       <ScrollView contentContainerStyle={styles.scrollContent}>
         <View style={styles.header}>
           <Title style={styles.title}>Privacy & Consent</Title>
-          <Paragraph style={styles.subtitle}>
-            Your privacy is our top priority
-          </Paragraph>
+          <Paragraph style={styles.subtitle}>Your data stays under your control</Paragraph>
         </View>
 
         <Card style={styles.card}>
           <Card.Content>
-            <Title style={styles.cardTitle}>What Data We Collect</Title>
+            <Title style={styles.cardTitle}>What AdSight Can Process</Title>
             <Paragraph style={styles.description}>
-              AdSight may collect and process the following data types locally on your device:
+              AdSight processes only information you provide or explicitly import. Examples include interests, exported ad preferences, search history, purchase history, and app-usage data you choose to provide.
             </Paragraph>
-            <View style={styles.dataList}>
-              <Text style={styles.dataItem}>• Personal interests (manually entered by you)</Text>
-              <Text style={styles.dataItem}>• Exported ad preferences from platforms (Facebook, Google, Amazon)</Text>
-              <Text style={styles.dataItem}>• Installed apps usage statistics (with explicit permission)</Text>
-              <Text style={styles.dataItem}>• Search history data (if provided by you)</Text>
-              <Text style={styles.dataItem}>• Purchase history data (if provided by you)</Text>
-            </View>
           </Card.Content>
         </Card>
 
         <Card style={styles.card}>
           <Card.Content>
-            <Title style={styles.cardTitle}>Why We Collect This Data</Title>
+            <Title style={styles.cardTitle}>Why</Title>
             <Paragraph style={styles.description}>
-              This data is used exclusively to:
+              The information is used locally to build an explainable advertising profile, show supporting evidence, and help you understand how advertising categories could be inferred from your data.
             </Paragraph>
-            <View style={styles.dataList}>
-              <Text style={styles.dataItem}>• Generate accurate ad predictions for various platforms</Text>
-              <Text style={styles.dataItem}>• Provide insights into your digital advertising profile</Text>
-              <Text style={styles.dataItem}>• Help you understand how your data influences ads</Text>
-              <Text style={styles.dataItem}>• Improve prediction accuracy over time</Text>
-            </View>
           </Card.Content>
         </Card>
 
         <Card style={styles.consentCard}>
           <Card.Content>
-            <Title style={styles.cardTitle}>Your Consent</Title>
+            <Title style={styles.cardTitle}>Your Choices</Title>
             <View style={styles.checkboxContainer}>
               <Checkbox
                 status={dataCollectionConsent ? 'checked' : 'unchecked'}
@@ -132,7 +94,7 @@ export default function ConsentScreen() {
                 color={theme.colors.primary}
               />
               <Text style={styles.checkboxLabel}>
-                I consent to AdSight collecting and processing my data locally for ad prediction purposes. (Required)
+                I consent to AdSight processing the information I provide locally for advertising-profile analysis. (Required)
               </Text>
             </View>
 
@@ -143,7 +105,7 @@ export default function ConsentScreen() {
                 color={theme.colors.primary}
               />
               <Text style={styles.checkboxLabel}>
-                I understand that all data processing happens offline on my device and that no data is transmitted to external servers. (Required)
+                I understand that the core analysis is designed to run locally on this device. (Required)
               </Text>
             </View>
 
@@ -156,7 +118,7 @@ export default function ConsentScreen() {
                 color={theme.colors.primary}
               />
               <Text style={styles.checkboxLabel}>
-                I consent to receiving monthly reminders to update my data profile for better prediction accuracy. (Optional)
+                I want optional reminders to refresh my profile. (Optional)
               </Text>
             </View>
           </Card.Content>
@@ -173,7 +135,6 @@ export default function ConsentScreen() {
           >
             {submitting ? 'Saving…' : 'Accept & Continue'}
           </Button>
-
           <Button
             mode="outlined"
             onPress={handleDeclineConsent}
@@ -185,9 +146,7 @@ export default function ConsentScreen() {
           </Button>
         </View>
 
-        <Text style={styles.footer}>
-          You can change these preferences anytime in Settings
-        </Text>
+        <Text style={styles.footer}>You can change these preferences anytime in Settings.</Text>
       </ScrollView>
     </LinearGradient>
   );
@@ -203,8 +162,6 @@ const styles = StyleSheet.create({
   consentCard: { marginBottom: 30, backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.primary, borderWidth: 1 },
   cardTitle: { color: theme.colors.text, marginBottom: 10, fontSize: 18 },
   description: { color: theme.colors.text, lineHeight: 24 },
-  dataList: { marginTop: 10 },
-  dataItem: { color: theme.colors.text, fontSize: 14, marginBottom: 6, lineHeight: 20 },
   checkboxContainer: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 15, paddingRight: 10 },
   checkboxLabel: { color: theme.colors.text, fontSize: 14, lineHeight: 20, marginLeft: 8, flex: 1 },
   divider: { marginVertical: 15, backgroundColor: theme.colors.borderColor },
