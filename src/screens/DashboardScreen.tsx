@@ -1,509 +1,218 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  StyleSheet,
-  ScrollView,
-  RefreshControl,
-  Alert,
-} from 'react-native';
-import {
-  Text,
-  Button,
-  Card,
-  Title,
-  Paragraph,
-  ProgressBar,
-  Chip,
-  FAB,
-} from 'react-native-paper';
-import { useRoute, useNavigation, RouteProp } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { PredictionEngine } from '../services/PredictionEngine';
-import { Platform, UserProfile, AdPrediction } from '../types';
+import React, { useCallback, useEffect, useState } from 'react';
+import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { Button, Card, Chip, Paragraph, ProgressBar, Text, Title } from 'react-native-paper';
+import { DrawerNavigationProp } from '@react-navigation/drawer';
+import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
+
+import { inferenceEngineV2 } from '../intelligence';
+import { InferenceResult } from '../intelligence/v2Types';
+import { Platform, UserProfile, MainDrawerParamList } from '../types';
+import { profileRepository } from '../storage';
 import { theme } from '../theme/theme';
-import { MainDrawerParamList } from '../types';
 
 type DashboardRouteProp = RouteProp<MainDrawerParamList, 'Dashboard'>;
+type DashboardNavigationProp = DrawerNavigationProp<MainDrawerParamList, 'Dashboard'>;
 
-const platformIcons: { [key in Platform]: string } = {
-  facebook: '📘',
-  instagram: '📷',
-  google: '🔍',
-  youtube: '📺',
-  tiktok: '🎵',
-  linkedin: '💼',
-  amazon: '📦',
-};
-
-const platformNames: { [key in Platform]: string } = {
-  facebook: 'Facebook',
-  instagram: 'Instagram',
-  google: 'Google Search',
-  youtube: 'YouTube',
-  tiktok: 'TikTok',
-  linkedin: 'LinkedIn',
-  amazon: 'Amazon',
-};
+const platforms: Array<{ id: Platform; label: string }> = [
+  { id: 'facebook', label: 'Facebook' },
+  { id: 'instagram', label: 'Instagram' },
+  { id: 'google', label: 'Google Search' },
+  { id: 'youtube', label: 'YouTube' },
+  { id: 'tiktok', label: 'TikTok' },
+  { id: 'linkedin', label: 'LinkedIn' },
+  { id: 'amazon', label: 'Amazon' },
+];
 
 export default function DashboardScreen() {
   const route = useRoute<DashboardRouteProp>();
-  const navigation = useNavigation();
-  const [selectedPlatform, setSelectedPlatform] = useState<Platform>('facebook');
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  const [prediction, setPrediction] = useState<AdPrediction | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const navigation = useNavigation<DashboardNavigationProp>();
+  const [selectedPlatform, setSelectedPlatform] = useState<Platform>(route.params?.platform ?? 'facebook');
+  const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [topResult, setTopResult] = useState<InferenceResult | null>(null);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const predictionEngine = new PredictionEngine();
+  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (route.params?.platform) {
-      setSelectedPlatform(route.params.platform);
-    }
-    loadUserProfile();
-  }, [route.params]);
-
-  useEffect(() => {
-    if (userProfile) {
-      generatePredictions();
-    }
-  }, [userProfile, selectedPlatform]);
-
-  const loadUserProfile = async () => {
+  const load = useCallback(async () => {
+    setError(null);
     try {
-      const profileData = await AsyncStorage.getItem('user_profile');
-      if (profileData) {
-        setUserProfile(JSON.parse(profileData));
+      const storedProfile = await profileRepository.get();
+      setProfile(storedProfile);
+      if (storedProfile) {
+        const results = inferenceEngineV2.generate(storedProfile, selectedPlatform);
+        setTopResult(results.sort((a, b) => b.score - a.score)[0] ?? null);
       } else {
-        // Create a simulated profile for demo purposes
-        const simulatedProfile = predictionEngine.createSimulatedProfile('tech_enthusiast');
-        setUserProfile(simulatedProfile);
-        await AsyncStorage.setItem('user_profile', JSON.stringify(simulatedProfile));
+        setTopResult(null);
       }
-    } catch (error) {
-      console.error('Error loading user profile:', error);
-      // Fallback to simulated profile
-      setUserProfile(predictionEngine.createSimulatedProfile('tech_enthusiast'));
-    }
-  };
-
-  const generatePredictions = async () => {
-    if (!userProfile) return;
-    
-    setIsLoading(true);
-    try {
-      const newPrediction = predictionEngine.generatePredictions(userProfile, selectedPlatform);
-      setPrediction(newPrediction);
-    } catch (error) {
-      console.error('Error generating predictions:', error);
-      Alert.alert('Error', 'Failed to generate predictions. Please try again.');
+    } catch (cause) {
+      console.error('Dashboard load failed:', cause);
+      setError('AdSight could not load your local profile.');
     } finally {
-      setIsLoading(false);
+      setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, [selectedPlatform]);
 
-  const onRefresh = async () => {
+  useEffect(() => {
+    if (route.params?.platform) setSelectedPlatform(route.params.platform);
+  }, [route.params?.platform]);
+
+  useEffect(() => {
+    setLoading(true);
+    void load();
+  }, [load]);
+
+  const refresh = () => {
     setRefreshing(true);
-    await loadUserProfile();
-    setRefreshing(false);
+    void load();
   };
 
-  const handleCreateProfile = () => {
-    navigation.navigate('DataInput' as never);
-  };
-
-  const handleTrySimulated = () => {
-    Alert.alert(
-      'Try Simulated Profiles',
-      'Select a profile type to see example predictions:',
-      [
-        {
-          text: 'Tech Enthusiast',
-          onPress: () => createSimulatedProfile('tech_enthusiast'),
-        },
-        {
-          text: 'Fashion Lover',
-          onPress: () => createSimulatedProfile('fashion_lover'),
-        },
-        {
-          text: 'Fitness Focused',
-          onPress: () => createSimulatedProfile('fitness_focused'),
-        },
-        {
-          text: 'Business Professional',
-          onPress: () => createSimulatedProfile('business_professional'),
-        },
-        { text: 'Cancel', style: 'cancel' },
-      ]
-    );
-  };
-
-  const createSimulatedProfile = async (type: 'tech_enthusiast' | 'fashion_lover' | 'fitness_focused' | 'business_professional') => {
-    const simulatedProfile = predictionEngine.createSimulatedProfile(type);
-    setUserProfile(simulatedProfile);
-    await AsyncStorage.setItem('user_profile', JSON.stringify(simulatedProfile));
-  };
-
-  const getConfidenceColor = (confidence: number): string => {
-    if (confidence >= 0.7) return theme.colors.success;
-    if (confidence >= 0.4) return theme.colors.warning;
-    return theme.colors.error;
-  };
-
-  if (!userProfile) {
+  if (loading) {
     return (
-      <View style={styles.emptyContainer}>
-        <Card style={styles.emptyCard}>
-          <Card.Content>
-            <Title style={styles.emptyTitle}>Welcome to AdSight!</Title>
-            <Paragraph style={styles.emptyText}>
-              To get started with ad predictions, you need to set up your profile with interests, 
-              app usage, and preferences.
-            </Paragraph>
-            
-            <View style={styles.emptyActions}>
-              <Button
-                mode="contained"
-                onPress={handleCreateProfile}
-                style={styles.primaryButton}
-                contentStyle={styles.buttonContent}
-              >
-                Create Your Profile
-              </Button>
-              
-              <Button
-                mode="outlined"
-                onPress={handleTrySimulated}
-                style={styles.secondaryButton}
-                contentStyle={styles.buttonContent}
-              >
-                Try Simulated Profile
-              </Button>
-            </View>
-          </Card.Content>
-        </Card>
+      <View style={styles.center}>
+        <ProgressBar indeterminate style={styles.loadingBar} />
+        <Text style={styles.muted}>Loading your local profile...</Text>
       </View>
     );
   }
 
+  if (error) {
+    return (
+      <View style={styles.center}>
+        <Title style={styles.title}>Something went wrong</Title>
+        <Paragraph style={styles.muted}>{error}</Paragraph>
+        <Button mode="contained" onPress={refresh}>Try again</Button>
+      </View>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <ScrollView contentContainerStyle={styles.empty}>
+        <Card style={styles.card}>
+          <Card.Content>
+            <Title style={styles.title}>Start with your data</Title>
+            <Paragraph style={styles.muted}>
+              AdSight needs data you choose to provide before it can estimate advertising interests.
+              Nothing is silently simulated or added for you.
+            </Paragraph>
+            <Button mode="contained" onPress={() => navigation.navigate('DataInput')}>
+              Create your profile
+            </Button>
+            <Button mode="outlined" onPress={() => navigation.navigate('Import')} style={styles.secondaryButton}>
+              Import data
+            </Button>
+          </Card.Content>
+        </Card>
+      </ScrollView>
+    );
+  }
+
+  const platformLabel = platforms.find((item) => item.id === selectedPlatform)?.label ?? selectedPlatform;
+  const signalCount = profile.interests.length + profile.installedApps.length + profile.searches.length + profile.purchases.length;
+
   return (
     <View style={styles.container}>
       <ScrollView
-        style={styles.scrollView}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        contentContainerStyle={styles.content}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}
       >
-        {/* Platform Selector */}
-        <Card style={styles.platformCard}>
-          <Card.Content>
-            <Title style={styles.sectionTitle}>Select Platform</Title>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-              <View style={styles.platformSelector}>
-                {(Object.keys(platformIcons) as Platform[]).map((platform) => (
-                  <Chip
-                    key={platform}
-                    icon={() => <Text style={styles.chipIcon}>{platformIcons[platform]}</Text>}
-                    selected={selectedPlatform === platform}
-                    onPress={() => setSelectedPlatform(platform)}
-                    style={[
-                      styles.platformChip,
-                      selectedPlatform === platform && styles.selectedChip,
-                    ]}
-                    textStyle={[
-                      styles.chipText,
-                      selectedPlatform === platform && styles.selectedChipText,
-                    ]}
-                  >
-                    {platformNames[platform]}
-                  </Chip>
-                ))}
-              </View>
-            </ScrollView>
-          </Card.Content>
-        </Card>
+        <Title style={styles.title}>Advertising Profile</Title>
+        <Paragraph style={styles.muted}>
+          Local estimates based only on information you chose to provide.
+        </Paragraph>
 
-        {/* Current Profile Info */}
-        <Card style={styles.profileCard}>
+        <Card style={styles.card}>
           <Card.Content>
-            <Title style={styles.sectionTitle}>Current Profile</Title>
-            <View style={styles.profileInfo}>
-              <Text style={styles.profileLabel}>Profile: {userProfile.name}</Text>
-              <Text style={styles.profileLabel}>Interests: {userProfile.interests.length}</Text>
-              <Text style={styles.profileLabel}>Apps: {userProfile.installedApps.length}</Text>
-              <Text style={styles.profileLabel}>Searches: {userProfile.searches.length}</Text>
+            <Text style={styles.profileName}>{profile.name}</Text>
+            <View style={styles.stats}>
+              <Text style={styles.stat}>Signals {signalCount}</Text>
+              <Text style={styles.stat}>Interests {profile.interests.length}</Text>
+              <Text style={styles.stat}>Searches {profile.searches.length}</Text>
+              <Text style={styles.stat}>Purchases {profile.purchases.length}</Text>
             </View>
           </Card.Content>
         </Card>
 
-        {/* Predictions */}
-        {prediction && (
-          <>
-            {/* Confidence Score */}
-            <Card style={styles.confidenceCard}>
-              <Card.Content>
-                <Title style={styles.sectionTitle}>Prediction Confidence</Title>
-                <View style={styles.confidenceContainer}>
-                  <Text style={styles.confidenceText}>
-                    {Math.round(prediction.confidence * 100)}%
-                  </Text>
-                  <ProgressBar
-                    progress={prediction.confidence}
-                    color={getConfidenceColor(prediction.confidence)}
-                    style={styles.progressBar}
-                  />
-                </View>
-              </Card.Content>
-            </Card>
+        <Title style={styles.sectionTitle}>Platform</Title>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
+          {platforms.map((platform) => (
+            <Chip
+              key={platform.id}
+              selected={selectedPlatform === platform.id}
+              onPress={() => setSelectedPlatform(platform.id)}
+              accessibilityLabel={`View ${platform.label} estimate`}
+            >
+              {platform.label}
+            </Chip>
+          ))}
+        </ScrollView>
 
-            {/* Ad Categories */}
-            <Card style={styles.categoriesCard}>
-              <Card.Content>
-                <Title style={styles.sectionTitle}>
-                  Predicted Ad Categories for {platformNames[selectedPlatform]}
-                </Title>
-                
-                {prediction.categories.map((category, index) => (
-                  <View key={index} style={styles.categoryItem}>
-                    <View style={styles.categoryHeader}>
-                      <Text style={styles.categoryName}>{category.name}</Text>
-                      <Text style={styles.categoryProbability}>
-                        {Math.round(category.probability * 100)}%
-                      </Text>
-                    </View>
-                    <ProgressBar
-                      progress={category.probability}
-                      color={theme.colors.primary}
-                      style={styles.categoryProgress}
-                    />
-                    
-                    <View style={styles.exampleContainer}>
-                      <Text style={styles.exampleTitle}>Example Ads:</Text>
-                      {category.examples.slice(0, 2).map((example, exampleIndex) => (
-                        <Text key={exampleIndex} style={styles.exampleText}>
-                          • {example}
-                        </Text>
-                      ))}
-                    </View>
-                  </View>
-                ))}
-              </Card.Content>
-            </Card>
-
-            {/* Reasoning */}
-            <Card style={styles.reasoningCard}>
-              <Card.Content>
-                <Title style={styles.sectionTitle}>Why These Predictions?</Title>
-                {prediction.reasoning.map((reason, index) => (
-                  <Text key={index} style={styles.reasoningText}>
-                    • {reason}
-                  </Text>
-                ))}
-              </Card.Content>
-            </Card>
-          </>
-        )}
-
-        {isLoading && (
-          <Card style={styles.loadingCard}>
+        {topResult ? (
+          <Card style={styles.card}>
             <Card.Content>
-              <Text style={styles.loadingText}>Generating predictions...</Text>
-              <ProgressBar indeterminate color={theme.colors.primary} />
+              <Text style={styles.overline}>TOP LOCAL ESTIMATE</Text>
+              <Title style={styles.resultTitle}>{topResult.categoryName}</Title>
+              <Text style={styles.signalStrength}>Signal strength {Math.round(topResult.score * 100)}%</Text>
+              <ProgressBar progress={topResult.score} style={styles.progress} />
+              <Text style={styles.muted}>
+                Confidence {Math.round(topResult.confidence * 100)}% · Data quality {Math.round(topResult.dataQuality * 100)}%
+              </Text>
+              <Paragraph style={styles.explanation}>
+                {topResult.evidence[0]?.explanation ?? 'No supporting evidence was found for this estimate.'}
+              </Paragraph>
+              <Button mode="contained" onPress={() => navigation.navigate('Evidence')}>
+                Inspect evidence
+              </Button>
+            </Card.Content>
+          </Card>
+        ) : (
+          <Card style={styles.card}>
+            <Card.Content>
+              <Title style={styles.resultTitle}>Not enough evidence yet</Title>
+              <Paragraph style={styles.muted}>
+                Add more interests, searches, purchases, or platform preferences to produce a useful estimate.
+              </Paragraph>
+              <Button mode="contained" onPress={() => navigation.navigate('DataInput')}>
+                Add data
+              </Button>
             </Card.Content>
           </Card>
         )}
-      </ScrollView>
 
-      <FAB
-        style={styles.fab}
-        icon="refresh"
-        onPress={() => generatePredictions()}
-        label="Refresh"
-      />
+        <Card style={styles.noteCard}>
+          <Card.Content>
+            <Text style={styles.noteTitle}>What this means</Text>
+            <Paragraph style={styles.muted}>
+              AdSight estimates what could be inferred from your available data. It does not see a platform's private advertiser targeting system.
+            </Paragraph>
+          </Card.Content>
+        </Card>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: theme.colors.background,
-  },
-  scrollView: {
-    flex: 1,
-    padding: 15,
-  },
-  emptyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 20,
-    backgroundColor: theme.colors.background,
-  },
-  emptyCard: {
-    backgroundColor: theme.colors.cardBackground,
-    elevation: 4,
-  },
-  emptyTitle: {
-    color: theme.colors.text,
-    textAlign: 'center',
-    marginBottom: 15,
-  },
-  emptyText: {
-    color: theme.colors.text,
-    textAlign: 'center',
-    opacity: 0.8,
-    marginBottom: 20,
-    lineHeight: 24,
-  },
-  emptyActions: {
-    gap: 10,
-  },
-  primaryButton: {
-    backgroundColor: theme.colors.primary,
-  },
-  secondaryButton: {
-    borderColor: theme.colors.primary,
-  },
-  buttonContent: {
-    paddingVertical: 8,
-  },
-  platformCard: {
-    backgroundColor: theme.colors.cardBackground,
-    elevation: 4,
-    marginBottom: 15,
-  },
-  sectionTitle: {
-    color: theme.colors.text,
-    marginBottom: 15,
-  },
-  platformSelector: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  platformChip: {
-    backgroundColor: theme.colors.accent,
-  },
-  selectedChip: {
-    backgroundColor: theme.colors.primary,
-  },
-  chipIcon: {
-    fontSize: 16,
-  },
-  chipText: {
-    color: theme.colors.text,
-  },
-  selectedChipText: {
-    color: theme.colors.text,
-    fontWeight: 'bold',
-  },
-  profileCard: {
-    backgroundColor: theme.colors.cardBackground,
-    elevation: 4,
-    marginBottom: 15,
-  },
-  profileInfo: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 15,
-  },
-  profileLabel: {
-    color: theme.colors.text,
-    fontSize: 14,
-    opacity: 0.8,
-  },
-  confidenceCard: {
-    backgroundColor: theme.colors.cardBackground,
-    elevation: 4,
-    marginBottom: 15,
-  },
-  confidenceContainer: {
-    alignItems: 'center',
-  },
-  confidenceText: {
-    color: theme.colors.text,
-    fontSize: 24,
-    fontWeight: 'bold',
-    marginBottom: 10,
-  },
-  progressBar: {
-    height: 8,
-    borderRadius: 4,
-    width: '100%',
-  },
-  categoriesCard: {
-    backgroundColor: theme.colors.cardBackground,
-    elevation: 4,
-    marginBottom: 15,
-  },
-  categoryItem: {
-    marginBottom: 20,
-    paddingBottom: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: theme.colors.borderColor,
-  },
-  categoryHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  categoryName: {
-    color: theme.colors.text,
-    fontSize: 16,
-    fontWeight: 'bold',
-    flex: 1,
-  },
-  categoryProbability: {
-    color: theme.colors.primary,
-    fontSize: 14,
-    fontWeight: 'bold',
-  },
-  categoryProgress: {
-    height: 6,
-    borderRadius: 3,
-    marginBottom: 10,
-  },
-  exampleContainer: {
-    marginTop: 8,
-  },
-  exampleTitle: {
-    color: theme.colors.text,
-    fontSize: 14,
-    fontWeight: 'bold',
-    marginBottom: 5,
-    opacity: 0.8,
-  },
-  exampleText: {
-    color: theme.colors.text,
-    fontSize: 13,
-    opacity: 0.7,
-    marginBottom: 2,
-  },
-  reasoningCard: {
-    backgroundColor: theme.colors.cardBackground,
-    elevation: 4,
-    marginBottom: 15,
-  },
-  reasoningText: {
-    color: theme.colors.text,
-    fontSize: 14,
-    marginBottom: 8,
-    opacity: 0.8,
-  },
-  loadingCard: {
-    backgroundColor: theme.colors.cardBackground,
-    elevation: 4,
-    marginBottom: 15,
-  },
-  loadingText: {
-    color: theme.colors.text,
-    textAlign: 'center',
-    marginBottom: 15,
-  },
-  fab: {
-    position: 'absolute',
-    margin: 16,
-    right: 0,
-    bottom: 0,
-    backgroundColor: theme.colors.primary,
-  },
+  container: { flex: 1, backgroundColor: theme.colors.background },
+  content: { padding: 16, paddingBottom: 32 },
+  center: { flex: 1, justifyContent: 'center', padding: 24, backgroundColor: theme.colors.background, gap: 16 },
+  empty: { flexGrow: 1, justifyContent: 'center', padding: 20, backgroundColor: theme.colors.background },
+  loadingBar: { width: '100%' },
+  title: { color: theme.colors.text, marginBottom: 8 },
+  sectionTitle: { color: theme.colors.text, marginTop: 20, marginBottom: 8 },
+  muted: { color: theme.colors.text, opacity: 0.72, lineHeight: 21 },
+  card: { backgroundColor: theme.colors.cardBackground, marginTop: 16 },
+  noteCard: { backgroundColor: theme.colors.cardBackground, marginTop: 16, marginBottom: 8 },
+  secondaryButton: { marginTop: 8 },
+  profileName: { color: theme.colors.text, fontSize: 22, fontWeight: '700' },
+  stats: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 12 },
+  stat: { color: theme.colors.text, opacity: 0.78 },
+  chips: { gap: 8, paddingVertical: 4 },
+  overline: { color: theme.colors.primary, fontSize: 12, fontWeight: '700', letterSpacing: 1 },
+  resultTitle: { color: theme.colors.text, marginTop: 4 },
+  signalStrength: { color: theme.colors.primary, fontSize: 18, fontWeight: '700', marginVertical: 10 },
+  progress: { marginBottom: 10 },
+  explanation: { color: theme.colors.text, marginVertical: 12, lineHeight: 21 },
+  noteTitle: { color: theme.colors.text, fontWeight: '700', marginBottom: 6 },
 });
