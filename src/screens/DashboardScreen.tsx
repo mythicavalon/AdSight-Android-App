@@ -4,14 +4,15 @@ import { Button, Card, Chip, Paragraph, ProgressBar, Text, Title } from 'react-n
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 import { RouteProp, useNavigation, useRoute } from '@react-navigation/native';
 
-import { inferenceEngineV2 } from '../intelligence';
-import { InferenceResult } from '../intelligence/v2Types';
+import { InferenceEngineV2, InferenceResult } from '../intelligence';
 import { Platform, UserProfile, MainDrawerParamList } from '../types';
 import { profileRepository } from '../storage';
 import { theme } from '../theme/theme';
 
 type DashboardRouteProp = RouteProp<MainDrawerParamList, 'Dashboard'>;
 type DashboardNavigationProp = DrawerNavigationProp<MainDrawerParamList, 'Dashboard'>;
+
+const inferenceEngine = new InferenceEngineV2();
 
 const platforms: Array<{ id: Platform; label: string }> = [
   { id: 'facebook', label: 'Facebook' },
@@ -39,8 +40,8 @@ export default function DashboardScreen() {
       const storedProfile = await profileRepository.get();
       setProfile(storedProfile);
       if (storedProfile) {
-        const results = inferenceEngineV2.generate(storedProfile, selectedPlatform);
-        setTopResult(results.sort((a, b) => b.score - a.score)[0] ?? null);
+        const results = inferenceEngine.generate(storedProfile, selectedPlatform).results;
+        setTopResult(results[0] ?? null);
       } else {
         setTopResult(null);
       }
@@ -108,7 +109,6 @@ export default function DashboardScreen() {
     );
   }
 
-  const platformLabel = platforms.find((item) => item.id === selectedPlatform)?.label ?? selectedPlatform;
   const signalCount = profile.interests.length + profile.installedApps.length + profile.searches.length + profile.purchases.length;
 
   return (
