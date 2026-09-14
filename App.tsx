@@ -13,7 +13,7 @@ import { settingsRepository } from './src/storage/SettingsRepository';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import ConsentScreen from './src/screens/ConsentScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
-import DataInputScreen from './src/screens/DataInputScreen';
+import V2DataInputScreen from './src/screens/V2DataInputScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import AnalyticsScreen from './src/screens/AnalyticsScreen';
 import CustomSidebar from './src/components/CustomSidebar';
@@ -38,7 +38,7 @@ function MainAppNavigator() {
     >
       <Drawer.Screen name="Dashboard" component={DashboardScreen} options={{ title: 'AdSight Dashboard' }} />
       <Drawer.Screen name="Evidence" component={EvidenceExplorerScreen} options={{ title: 'Evidence Explorer' }} />
-      <Drawer.Screen name="DataInput" component={DataInputScreen} options={{ title: 'Data Input' }} />
+      <Drawer.Screen name="DataInput" component={V2DataInputScreen} options={{ title: 'Data Input' }} />
       <Drawer.Screen name="Analytics" component={AnalyticsScreen} options={{ title: 'Analytics' }} />
       <Drawer.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
       <Drawer.Screen name="Import" component={ImportDataScreen} options={{ title: 'Import Data' }} />
