@@ -1,0 +1,42 @@
+name: Finalize Expo SDK 57 upgrade
+
+on:
+  push:
+    branches: ['codex/adsight-v2-foundation']
+
+permissions:
+  contents: write
+
+jobs:
+  upgrade:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: codex/adsight-v2-foundation
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.1
+          cache: npm
+      - name: Install declared dependencies
+        run: npm install --no-audit --no-fund
+      - name: Align Expo SDK dependencies
+        env:
+          CI: '1'
+        run: |
+          npx expo install --fix
+          npx expo install react-native-reanimated react-native-worklets
+      - name: Validate Expo project
+        run: npx expo-doctor
+      - name: Commit generated lockfile and aligned dependencies
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm -f .github/UPGRADE_SDK_57
+          git add package.json package-lock.json
+          git diff --cached --quiet || git commit -m "chore: finalize Expo SDK 57 dependency alignment"
+          git push origin codex/adsight-v2-foundation
