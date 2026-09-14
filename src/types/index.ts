@@ -24,7 +24,7 @@ export interface UserProfile {
 export interface AppUsage {
   packageName: string;
   appName: string;
-  usageTime: number; // in minutes
+  usageTime: number;
   category: string;
 }
 
@@ -41,7 +41,6 @@ export interface PurchaseHistory {
   timestamp: Date;
 }
 
-// Prediction types
 export interface AdPrediction {
   platform: Platform;
   categories: AdCategory[];
@@ -55,7 +54,6 @@ export interface AdCategory {
   examples: string[];
 }
 
-// Ad mapping types for the prediction engine
 export interface AdMapping {
   platforms: {
     [platform in Platform]: PlatformMapping;
@@ -87,7 +85,6 @@ export interface PredictionRule {
   };
 }
 
-// Settings types
 export interface AppSettings {
   profileUpdateReminder: boolean;
   reminderFrequency: 'weekly' | 'monthly' | 'quarterly';
@@ -97,7 +94,6 @@ export interface AppSettings {
   multipleProfiles: boolean;
 }
 
-// Navigation types
 export type RootStackParamList = {
   Welcome: undefined;
   Consent: undefined;
@@ -110,4 +106,5 @@ export type MainDrawerParamList = {
   Analytics: undefined;
   Settings: undefined;
   Import: undefined;
+  Evidence: { platform?: Platform };
 };
