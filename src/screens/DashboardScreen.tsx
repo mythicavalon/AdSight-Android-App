@@ -72,8 +72,8 @@ export default function DashboardScreen() {
       <Card style={styles.card}><Card.Content>
         <Title style={styles.title}>Start with your data</Title>
         <Paragraph style={styles.muted}>AdSight needs data you choose to provide before it can estimate advertising interests. Nothing is silently simulated or added for you.</Paragraph>
-        <Button mode="contained" onPress={() => navigation.navigate('DataInput')}>Create your profile</Button>
-        <Button mode="outlined" onPress={() => navigation.navigate('Import')} style={styles.secondaryButton}>Import data</Button>
+        <Button mode="contained" onPress={() => navigation.navigate({ name: 'DataInput' })}>Create your profile</Button>
+        <Button mode="outlined" onPress={() => navigation.navigate({ name: 'Import' })} style={styles.secondaryButton}>Import data</Button>
       </Card.Content></Card>
     </ScrollView>;
   }
@@ -107,11 +107,11 @@ export default function DashboardScreen() {
         <ProgressBar progress={topResult.score} style={styles.progress} />
         <Text style={styles.muted}>Confidence {Math.round(topResult.confidence * 100)}% · Data quality {Math.round(topResult.dataQuality * 100)}%</Text>
         <Paragraph style={styles.explanation}>{topResult.evidence[0]?.explanation ?? 'No supporting evidence was found for this estimate.'}</Paragraph>
-        <Button mode="contained" onPress={() => navigation.navigate('Evidence')}>Inspect evidence</Button>
+        <Button mode="contained" onPress={() => navigation.navigate({ name: 'Evidence' })}>Inspect evidence</Button>
       </Card.Content></Card> : <Card style={styles.card}><Card.Content>
         <Title style={styles.resultTitle}>Not enough evidence yet</Title>
         <Paragraph style={styles.muted}>Add more interests, searches, purchases, or platform preferences to produce a useful estimate.</Paragraph>
-        <Button mode="contained" onPress={() => navigation.navigate('DataInput')}>Add data</Button>
+        <Button mode="contained" onPress={() => navigation.navigate({ name: 'DataInput' })}>Add data</Button>
       </Card.Content></Card>}
 
       <Card style={styles.noteCard}><Card.Content>
