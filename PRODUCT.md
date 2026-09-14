@@ -1,49 +1,40 @@
-# AdSight — Product Overview
+# AdSight Product Direction
 
-## Mission
-Privacy-first ad prediction and insight app that helps users understand why they see ads, entirely on-device.
+AdSight helps people understand what advertising interests can be inferred from data they choose to provide.
 
-## Core Value
-- Offline predictions with transparent reasoning
-- Data sovereignty (imports are local; no server)
-- Clear, human-readable insights (what and why)
+## Current direction
 
-## Key Features
-- Onboarding and Consent with explicit privacy guarantees
-- Profile creation: interests, preferences, searches, purchases
-- Prediction Engine: per-platform categories, confidence, reasoning
-- Analytics: completeness, diversity, trends
-- Notifications: monthly profile update reminders (opt-in)
-- Import (1.1.0): parsers scaffold for Google Takeout, Facebook/Instagram, Amazon; activity log
-- Source Attribution groundwork: infer origin from URLs/UTM/domain maps
+The V2 rebuild is focused on a private, local-first, evidence-based experience:
 
-## v1.1.0 Scope
-- Import Data screen
-- Consent performance improvements
-- Dark theme readability improvements
+- User-provided profile data and imports remain local to the device.
+- AdSight generates deterministic estimates from observed signals.
+- Every inference should expose its supporting evidence, confidence, data quality, and uncertainty.
+- Platform context is modeled explicitly without claiming access to private advertiser targeting systems.
+- Storage is being migrated to encrypted SQLite with the database key protected by the platform secure storage layer.
 
-## Next (Proposed)
-- Implement concrete parsers for:
-  - Google Ad Center / Takeout JSONs
-  - Facebook/Instagram AYO JSON
-  - Amazon order CSV/JSON
-- Share-sheet receiver (Android): URL + image OCR (on-device)
-- URL/source classifier: UTM parsing, domain catalog (search/social/shopping/news)
-- On-device ML ranker (TF Lite/TFJS) to refine category order
-- Optional online updates for taxonomy (opt-in only)
+## First test milestone
 
-## Tech Notes
-- Stack: React Native (Expo SDK 53), RN 0.79.5
-- Navigation: React Navigation 6
-- UI: React Native Paper
-- Storage: AsyncStorage
-- Notifications: expo-notifications
-- Android: RN new architecture ready; ProGuard configured for Reanimated/RNGH/Screens
+The first production-grade test candidate is intentionally narrow:
 
-## Distribution
-- APK zips at repo root for easy access
+1. Fresh install and consent.
+2. Create or import a user profile.
+3. Store the data locally.
+4. Generate platform-specific inferences.
+5. Inspect the evidence behind an inference.
+6. Restart the app and confirm persistence.
+7. Delete/reset local data and confirm removal.
 
-## Legal & Privacy
-- No background scraping of other apps
-- Imports are user-provided exports or share-sheet — explicit consent
-- All processing on-device; no network required by default
+## Planned after the first test
+
+- Complete migration of remaining V1 screens to the V2 storage and inference model.
+- Robust import normalization and provenance tracking.
+- What changed and What if experiences.
+- Prediction history and comparison.
+- Privacy Center with export and deletion controls.
+- Deterministic model fixtures and evaluation before making stronger accuracy claims.
+
+## Product boundaries
+
+AdSight does not scrape other apps, intercept network traffic, use Accessibility APIs for surveillance, or access private advertising APIs. It estimates what could be inferred from the data available to AdSight.
+
+This document is intentionally a product direction document, not a claim that every planned feature is already complete.
