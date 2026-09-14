@@ -14,13 +14,13 @@ export const theme = {
     disabled: '#8a8a8a',
     placeholder: '#b0b0b0',
     backdrop: 'rgba(0, 0, 0, 0.6)',
-    // Custom colors for AdSight
     secondary: '#16213e',
     success: '#34c759',
     warning: '#ffcc00',
     info: '#2196f3',
     cardBackground: '#1a1a2e',
     borderColor: '#2a2a3d',
+    checkboxUnchecked: '#aeb6c7',
   },
   roundness: 8,
 };
@@ -39,13 +39,13 @@ export const lightTheme = {
     disabled: '#9e9e9e',
     placeholder: '#666666',
     backdrop: 'rgba(0, 0, 0, 0.5)',
-    // Custom colors for light mode
     secondary: '#16213e',
     success: '#34c759',
     warning: '#ffcc00',
     info: '#2196f3',
     cardBackground: '#ffffff',
     borderColor: '#e0e0e0',
+    checkboxUnchecked: '#626a78',
   },
   roundness: 8,
 };
