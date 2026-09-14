@@ -5,7 +5,6 @@ import { useNavigation } from '@react-navigation/native';
 import { DrawerNavigationProp } from '@react-navigation/drawer';
 
 import { deleteDatabase } from '../storage/Database';
-import { settingsRepository } from '../storage/SettingsRepository';
 import { MainDrawerParamList } from '../types';
 import { theme } from '../theme/theme';
 
@@ -18,7 +17,7 @@ export default function V2SettingsScreen() {
   const deleteAllData = () => {
     Alert.alert(
       'Delete all AdSight data?',
-      'This removes the local profile, inference history, consent state, and encrypted database key from this device.',
+      'This removes the local profile, inference history, consent state, encrypted database, and database key from this device.',
       [
         { text: 'Cancel', style: 'cancel' },
         {
@@ -28,11 +27,10 @@ export default function V2SettingsScreen() {
             setDeleting(true);
             try {
               await deleteDatabase();
-              await settingsRepository.setBoolean('onboarding_complete', false);
-              Alert.alert('Data deleted', 'All local AdSight data has been deleted. Restart the app to begin again.');
+              Alert.alert('Data deleted', 'All local AdSight data and its encryption key have been deleted. Restart the app to begin again.');
             } catch (error) {
               console.error('Data deletion failed:', error);
-              Alert.alert('Could not delete data', 'AdSight could not complete the local data deletion. Please try again.');
+              Alert.alert('Could not delete data', 'AdSight could not complete local data deletion. Please try again.');
             } finally {
               setDeleting(false);
             }
@@ -46,32 +44,26 @@ export default function V2SettingsScreen() {
     <ScrollView contentContainerStyle={styles.content}>
       <Title style={styles.title}>Privacy Center</Title>
       <Paragraph style={styles.muted}>
-        AdSight is designed to keep your profile and inference data on this device. You control what data is provided.
+        AdSight keeps the profile and inference data it manages on this device. You control what information is provided.
       </Paragraph>
 
-      <Card style={styles.card}>
-        <Card.Content>
-          <Text style={styles.heading}>Local storage</Text>
-          <Paragraph style={styles.muted}>
-            Profile data is stored in the local encrypted database. The database key is protected by the platform secure storage layer.
-          </Paragraph>
-          <Button mode="contained" onPress={() => navigation.navigate('Dashboard')}>
-            Back to profile
-          </Button>
-        </Card.Content>
-      </Card>
+      <Card style={styles.card}><Card.Content>
+        <Text style={styles.heading}>Local storage</Text>
+        <Paragraph style={styles.muted}>
+          Profile data is stored in the local encrypted database. Its key is protected by platform secure storage.
+        </Paragraph>
+        <Button mode="contained" onPress={() => navigation.navigate('Dashboard')}>Back to profile</Button>
+      </Card.Content></Card>
 
-      <Card style={styles.dangerCard}>
-        <Card.Content>
-          <Text style={styles.heading}>Delete everything</Text>
-          <Paragraph style={styles.muted}>
-            Permanently remove AdSight's local database and its encryption key. This also clears onboarding state.
-          </Paragraph>
-          <Button mode="contained" buttonColor={theme.colors.error} textColor="#fff" loading={deleting} disabled={deleting} onPress={deleteAllData}>
-            Delete all local data
-          </Button>
-        </Card.Content>
-      </Card>
+      <Card style={styles.dangerCard}><Card.Content>
+        <Text style={styles.heading}>Delete everything</Text>
+        <Paragraph style={styles.muted}>
+          Permanently remove AdSight's local database and encryption key. A fresh launch will return to onboarding.
+        </Paragraph>
+        <Button mode="contained" buttonColor={theme.colors.error} textColor="#fff" loading={deleting} disabled={deleting} onPress={deleteAllData}>
+          Delete all local data
+        </Button>
+      </Card.Content></Card>
     </ScrollView>
   );
 }
