@@ -1,19 +1,16 @@
 name: Finalize Expo SDK 57 upgrade
 
 on:
+  workflow_dispatch:
   push:
     branches: ['codex/adsight-v2-foundation']
 
 permissions:
   contents: write
 
-concurrency:
-  group: adsight-sdk57-upgrade
-  cancel-in-progress: true
-
 jobs:
   upgrade:
-    if: github.actor != 'github-actions[bot]'
+    if: github.actor != 'github-actions[bot]' && hashFiles('.github/UPGRADE_SDK_57') != ''
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
