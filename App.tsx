@@ -13,8 +13,8 @@ import { settingsRepository } from './src/storage/SettingsRepository';
 import WelcomeScreen from './src/screens/WelcomeScreen';
 import ConsentScreen from './src/screens/ConsentScreen';
 import DashboardScreen from './src/screens/DashboardScreen';
-import DataInputScreen from './src/screens/DataInputScreen';
-import SettingsScreen from './src/screens/SettingsScreen';
+import V2DataInputScreen from './src/screens/V2DataInputScreen';
+import V2SettingsScreen from './src/screens/V2SettingsScreen';
 import AnalyticsScreen from './src/screens/AnalyticsScreen';
 import CustomSidebar from './src/components/CustomSidebar';
 import ImportDataScreen from './src/screens/ImportDataScreen';
@@ -38,9 +38,9 @@ function MainAppNavigator() {
     >
       <Drawer.Screen name="Dashboard" component={DashboardScreen} options={{ title: 'AdSight Dashboard' }} />
       <Drawer.Screen name="Evidence" component={EvidenceExplorerScreen} options={{ title: 'Evidence Explorer' }} />
-      <Drawer.Screen name="DataInput" component={DataInputScreen} options={{ title: 'Data Input' }} />
+      <Drawer.Screen name="DataInput" component={V2DataInputScreen} options={{ title: 'Data Input' }} />
       <Drawer.Screen name="Analytics" component={AnalyticsScreen} options={{ title: 'Analytics' }} />
-      <Drawer.Screen name="Settings" component={SettingsScreen} options={{ title: 'Settings' }} />
+      <Drawer.Screen name="Settings" component={V2SettingsScreen} options={{ title: 'Privacy Center' }} />
       <Drawer.Screen name="Import" component={ImportDataScreen} options={{ title: 'Import Data' }} />
     </Drawer.Navigator>
   );
@@ -53,12 +53,10 @@ export default function App() {
 
   useEffect(() => {
     let mounted = true;
-
     const initializeApp = async () => {
       try {
         await getDatabase();
         const onboardingComplete = await settingsRepository.getBoolean('onboarding_complete');
-
         if (!mounted) return;
         setHasCompletedOnboarding(onboardingComplete);
         void NotificationService.getInstance().initialize();
@@ -69,11 +67,8 @@ export default function App() {
         if (mounted) setIsLoading(false);
       }
     };
-
     void initializeApp();
-    return () => {
-      mounted = false;
-    };
+    return () => { mounted = false; };
   }, []);
 
   if (isLoading) {

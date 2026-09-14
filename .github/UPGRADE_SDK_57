@@ -1,1 +1,0 @@
-One-time migration marker. The SDK 57 workflow removes this file after generating and committing the aligned package-lock.json.

@@ -1,15 +1,12 @@
 name: Finalize Expo SDK 57 upgrade
 
 on:
+  workflow_dispatch:
   push:
     branches: ['codex/adsight-v2-foundation']
 
 permissions:
   contents: write
-
-concurrency:
-  group: adsight-sdk57-upgrade
-  cancel-in-progress: true
 
 jobs:
   upgrade:
@@ -17,26 +14,36 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           ref: codex/adsight-v2-foundation
+      - name: Stop if migration is already complete
+        if: ${{ !hashFiles('.github/UPGRADE_SDK_57') }}
+        run: echo 'SDK 57 migration marker not present; nothing to do.'
       - name: Setup Node
-        uses: actions/setup-node@v4
+        if: ${{ hashFiles('.github/UPGRADE_SDK_57') != '' }}
+        uses: actions/setup-node@v5
         with:
           node-version: 22.13.1
           cache: npm
       - name: Install declared dependencies
-        run: npm install --no-audit --no-fund
+        if: ${{ hashFiles('.github/UPGRADE_SDK_57') != '' }}
+        run: |
+          rm -f package-lock.json
+          npm install --no-audit --no-fund
       - name: Align Expo SDK dependencies
+        if: ${{ hashFiles('.github/UPGRADE_SDK_57') != '' }}
         env:
           CI: '1'
         run: |
           npx expo install --fix
           npx expo install react-native-reanimated react-native-worklets expo-sqlite expo-secure-store expo-crypto expo-dev-client
       - name: Validate Expo project
+        if: ${{ hashFiles('.github/UPGRADE_SDK_57') != '' }}
         run: npx expo-doctor
       - name: Commit generated lockfile and aligned dependencies
+        if: ${{ hashFiles('.github/UPGRADE_SDK_57') != '' }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

@@ -21,7 +21,7 @@ export default function ImportDataScreen() {
       const file = result.assets[0];
       appendLog(`Selected: ${file.name} (${file.size ?? 0} bytes)`);
       const uri = file.uri;
-      const info = await FileSystem.getInfoAsync(uri, { size: true });
+      const info = await FileSystem.getInfoAsync(uri);
       if (!info.exists) {
         appendLog('File not found.');
         return;
