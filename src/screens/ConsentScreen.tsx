@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, Alert } from 'react-native';
-import { Text, Button, Card, Title, Paragraph, Checkbox, Divider } from 'react-native-paper';
+import { Alert, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Button, Card, Checkbox, Divider, Paragraph, Text, Title } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -10,6 +10,35 @@ import { settingsRepository } from '../storage/SettingsRepository';
 import { NotificationService } from '../services/NotificationService';
 
 type ConsentScreenNavigationProp = StackNavigationProp<RootStackParamList, 'Consent'>;
+
+type ConsentRowProps = {
+  checked: boolean;
+  onPress: () => void;
+  children: React.ReactNode;
+  required?: boolean;
+};
+
+function ConsentRow({ checked, onPress, children, required }: ConsentRowProps) {
+  return (
+    <Pressable
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked }}
+      onPress={onPress}
+      style={({ pressed }) => [styles.consentRow, pressed && styles.consentRowPressed]}
+    >
+      <Checkbox
+        status={checked ? 'checked' : 'unchecked'}
+        onPress={onPress}
+        color={theme.colors.success}
+        uncheckedColor={theme.colors.checkboxUnchecked}
+      />
+      <View style={styles.consentCopy}>
+        <Text style={styles.consentLabel}>{children}</Text>
+        <Text style={styles.consentMeta}>{required ? 'Required' : 'Optional'}</Text>
+      </View>
+    </Pressable>
+  );
+}
 
 export default function ConsentScreen() {
   const navigation = useNavigation<ConsentScreenNavigationProp>();
@@ -22,7 +51,7 @@ export default function ConsentScreen() {
     if (!dataCollectionConsent || !offlineProcessingConsent) {
       Alert.alert(
         'Consent Required',
-        'You must accept the required privacy terms to continue using AdSight.',
+        'Please select both required consent options before continuing.',
         [{ text: 'OK' }],
       );
       return;
@@ -60,67 +89,67 @@ export default function ConsentScreen() {
 
   return (
     <LinearGradient colors={[theme.colors.primary, theme.colors.secondary]} style={styles.container}>
-      <ScrollView contentContainerStyle={styles.scrollContent}>
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={styles.header}>
+          <View style={styles.brandMark} accessibilityLabel="AdSight">
+            <Text style={styles.brandMarkText}>A</Text>
+          </View>
           <Title style={styles.title}>Privacy & Consent</Title>
           <Paragraph style={styles.subtitle}>Your data stays under your control</Paragraph>
         </View>
 
-        <Card style={styles.card}>
+        <Card style={styles.card} mode="contained">
           <Card.Content>
-            <Title style={styles.cardTitle}>What AdSight Can Process</Title>
+            <Title style={styles.cardTitle}>What AdSight can process</Title>
             <Paragraph style={styles.description}>
-              AdSight processes only information you provide or explicitly import. Examples include interests, exported ad preferences, search history, purchase history, and app-usage data you choose to provide.
+              Only information you provide or explicitly import, such as interests, ad preferences, search history, purchase history, and app-usage data.
             </Paragraph>
           </Card.Content>
         </Card>
 
-        <Card style={styles.card}>
+        <Card style={styles.card} mode="contained">
           <Card.Content>
-            <Title style={styles.cardTitle}>Why</Title>
+            <Title style={styles.cardTitle}>Why it is used</Title>
             <Paragraph style={styles.description}>
-              The information is used locally to build an explainable advertising profile, show supporting evidence, and help you understand how advertising categories could be inferred from your data.
+              AdSight uses your information locally to build an explainable advertising profile and show the evidence behind each inference.
             </Paragraph>
           </Card.Content>
         </Card>
 
-        <Card style={styles.consentCard}>
+        <Card style={styles.consentCard} mode="contained">
           <Card.Content>
-            <Title style={styles.cardTitle}>Your Choices</Title>
-            <View style={styles.checkboxContainer}>
-              <Checkbox
-                status={dataCollectionConsent ? 'checked' : 'unchecked'}
-                onPress={() => setDataCollectionConsent(!dataCollectionConsent)}
-                color={theme.colors.primary}
-              />
-              <Text style={styles.checkboxLabel}>
-                I consent to AdSight processing the information I provide locally for advertising-profile analysis. (Required)
-              </Text>
+            <View style={styles.sectionHeadingRow}>
+              <Title style={styles.cardTitle}>Your choices</Title>
+              <Text style={styles.requiredHint}>2 required</Text>
             </View>
 
-            <View style={styles.checkboxContainer}>
-              <Checkbox
-                status={offlineProcessingConsent ? 'checked' : 'unchecked'}
-                onPress={() => setOfflineProcessingConsent(!offlineProcessingConsent)}
-                color={theme.colors.primary}
-              />
-              <Text style={styles.checkboxLabel}>
-                I understand that the core analysis is designed to run locally on this device. (Required)
-              </Text>
-            </View>
+            <ConsentRow
+              checked={dataCollectionConsent}
+              onPress={() => setDataCollectionConsent((value) => !value)}
+              required
+            >
+              I consent to AdSight processing information I provide locally for advertising-profile analysis.
+            </ConsentRow>
+
+            <ConsentRow
+              checked={offlineProcessingConsent}
+              onPress={() => setOfflineProcessingConsent((value) => !value)}
+              required
+            >
+              I understand that core analysis is designed to run locally on this device.
+            </ConsentRow>
 
             <Divider style={styles.divider} />
 
-            <View style={styles.checkboxContainer}>
-              <Checkbox
-                status={updateReminderConsent ? 'checked' : 'unchecked'}
-                onPress={() => setUpdateReminderConsent(!updateReminderConsent)}
-                color={theme.colors.primary}
-              />
-              <Text style={styles.checkboxLabel}>
-                I want optional reminders to refresh my profile. (Optional)
-              </Text>
-            </View>
+            <ConsentRow
+              checked={updateReminderConsent}
+              onPress={() => setUpdateReminderConsent((value) => !value)}
+            >
+              I want optional reminders to refresh my profile.
+            </ConsentRow>
           </Card.Content>
         </Card>
 
@@ -128,7 +157,9 @@ export default function ConsentScreen() {
           <Button
             mode="contained"
             onPress={handleAcceptConsent}
-            style={[styles.button, styles.acceptButton]}
+            style={styles.acceptButton}
+            buttonColor={theme.colors.success}
+            textColor="#08120a"
             disabled={submitting || !dataCollectionConsent || !offlineProcessingConsent}
             loading={submitting}
             contentStyle={styles.buttonContent}
@@ -138,7 +169,7 @@ export default function ConsentScreen() {
           <Button
             mode="outlined"
             onPress={handleDeclineConsent}
-            style={[styles.button, styles.declineButton]}
+            style={styles.declineButton}
             contentStyle={styles.buttonContent}
             labelStyle={styles.declineButtonLabel}
           >
@@ -154,22 +185,51 @@ export default function ConsentScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  scrollContent: { flexGrow: 1, padding: 20 },
-  header: { alignItems: 'center', marginBottom: 30, marginTop: 40 },
-  title: { fontSize: 28, color: theme.colors.text, textAlign: 'center', fontWeight: 'bold' },
-  subtitle: { fontSize: 16, color: theme.colors.text, textAlign: 'center' },
-  card: { marginBottom: 20, backgroundColor: theme.colors.cardBackground },
-  consentCard: { marginBottom: 30, backgroundColor: theme.colors.cardBackground, borderColor: theme.colors.primary, borderWidth: 1 },
-  cardTitle: { color: theme.colors.text, marginBottom: 10, fontSize: 18 },
-  description: { color: theme.colors.text, lineHeight: 24 },
-  checkboxContainer: { flexDirection: 'row', alignItems: 'flex-start', marginBottom: 15, paddingRight: 10 },
-  checkboxLabel: { color: theme.colors.text, fontSize: 14, lineHeight: 20, marginLeft: 8, flex: 1 },
-  divider: { marginVertical: 15, backgroundColor: theme.colors.borderColor },
-  buttonContainer: { marginTop: 20 },
-  button: { marginBottom: 15 },
-  buttonContent: { paddingVertical: 8 },
-  acceptButton: { backgroundColor: theme.colors.success },
-  declineButton: { borderColor: theme.colors.error },
+  scrollContent: { paddingHorizontal: 18, paddingTop: 28, paddingBottom: 32 },
+  header: { alignItems: 'center', marginBottom: 22 },
+  brandMark: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(255,255,255,0.10)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.18)',
+    marginBottom: 12,
+  },
+  brandMarkText: { color: '#ffffff', fontSize: 28, fontWeight: '800' },
+  title: { fontSize: 27, color: theme.colors.text, textAlign: 'center', fontWeight: '700' },
+  subtitle: { fontSize: 15, color: theme.colors.text, opacity: 0.72, textAlign: 'center', marginTop: 2 },
+  card: { marginBottom: 14, backgroundColor: theme.colors.cardBackground, borderRadius: 18 },
+  consentCard: {
+    marginBottom: 16,
+    backgroundColor: theme.colors.cardBackground,
+    borderRadius: 18,
+    borderColor: theme.colors.borderColor,
+    borderWidth: 1,
+  },
+  sectionHeadingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  requiredHint: { color: theme.colors.success, fontSize: 12, fontWeight: '700' },
+  cardTitle: { color: theme.colors.text, marginBottom: 7, fontSize: 18 },
+  description: { color: theme.colors.text, opacity: 0.82, lineHeight: 21, fontSize: 14 },
+  consentRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    marginTop: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 4,
+    borderRadius: 12,
+  },
+  consentRowPressed: { backgroundColor: 'rgba(255,255,255,0.06)' },
+  consentCopy: { flex: 1, paddingTop: 5, paddingLeft: 7 },
+  consentLabel: { color: theme.colors.text, fontSize: 14, lineHeight: 20 },
+  consentMeta: { color: theme.colors.checkboxUnchecked, fontSize: 11, marginTop: 3, fontWeight: '600' },
+  divider: { marginVertical: 10, backgroundColor: theme.colors.borderColor },
+  buttonContainer: { paddingTop: 2 },
+  acceptButton: { borderRadius: 14, marginBottom: 10 },
+  declineButton: { borderColor: theme.colors.error, borderRadius: 14 },
+  buttonContent: { minHeight: 52 },
   declineButtonLabel: { color: theme.colors.error },
-  footer: { textAlign: 'center', color: theme.colors.text, fontSize: 12, marginBottom: 20, fontStyle: 'italic' },
+  footer: { textAlign: 'center', color: theme.colors.text, opacity: 0.55, fontSize: 11, marginTop: 14, marginBottom: 4 },
 });
