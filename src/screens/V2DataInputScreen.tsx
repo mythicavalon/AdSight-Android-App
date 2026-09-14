@@ -59,7 +59,7 @@ export default function V2DataInputScreen() {
       await profileRepository.save(profile);
       await settingsRepository.setBoolean('update_reminders_enabled', true);
       Alert.alert('Profile saved', 'Your data is stored locally. AdSight can now generate evidence-backed estimates.', [
-        { text: 'View profile', onPress: () => navigation.navigate('Dashboard') },
+        { text: 'View profile', onPress: () => navigation.navigate({ name: 'Dashboard' }) },
       ]);
     } catch (error) {
       console.error('Profile save failed:', error);
