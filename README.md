@@ -12,14 +12,14 @@ AdSight turns user-provided signals into transparent, evidence-backed advertisin
 
 ### Core capabilities
 
-- **Advertising profile**: See categories AdSight infers from your signals.
-- **Evidence**: Understand which signals contributed to an inference.
-- **Confidence and uncertainty**: Distinguish stronger evidence from weaker or incomplete evidence.
-- **Platform views**: Explore platform-specific prediction models without claiming access to internal targeting data.
-- **What changed**: Track how your inferred profile changes as your data changes.
-- **What if?**: Experiment with hypothetical signals before adding them to your real profile.
+- **Advertising profile**: Explore categories AdSight infers from your signals.
+- **Evidence Explorer**: See the signals that support an inference and why they contributed.
+- **Confidence and uncertainty**: Distinguish stronger evidence from weak, stale, sparse, or single-source evidence.
+- **Platform views**: Explore platform-specific models without claiming access to internal targeting data.
+- **What changed**: Compare inference snapshots as your data changes.
+- **What if?**: Experiment with hypothetical signals without modifying the real profile.
 - **Data import**: Bring in data exports you own and choose to analyze.
-- **Privacy controls**: Keep your profile local and control what you provide.
+- **Privacy controls**: Keep the profile local and control what you provide.
 
 ## Important distinction
 
@@ -27,86 +27,86 @@ AdSight is an **inference and education tool**, not an advertiser API.
 
 It does not claim to know the private targeting profile maintained by Google, Meta, TikTok, Amazon, LinkedIn, or any other platform. Unless a platform export explicitly provides a fact, AdSight labels its output as an **AdSight inference** rather than attributing it to that platform.
 
-Signals are kept separate from conclusions:
-
 | Layer | Meaning |
 | --- | --- |
 | **Observed** | Data you explicitly provide or import. |
 | **Inferred** | Categories AdSight calculates from observed signals. |
 | **Platform claimed** | Information explicitly contained in a platform-owned export, when available. |
 
-## Privacy by design
+## Privacy architecture
 
-AdSight is built around local-first processing.
+The production design is local-first:
 
-- No account is required for the core experience.
-- User-provided profile data is intended to remain on the device.
-- Data import is initiated by the user.
-- No scraping, accessibility surveillance, VPN interception, or screen scraping is required for the core product.
-- Android storage access should use scoped document access instead of broad legacy storage permissions.
+- Core profile and signal storage use SQLite.
+- The production database is configured for SQLCipher encryption.
+- The SQLCipher key is generated locally and stored with platform secure storage.
+- Imports are initiated by the user.
+- No scraping, accessibility surveillance, VPN interception, screen scraping, or credential collection is required for the core product.
+- Android storage access uses scoped document access rather than broad legacy storage permissions.
 - Analytics and advertising SDKs should not be added without an explicit privacy review.
 
-**Privacy claims in this repository describe product intent and implementation targets, not legal advice or a certification.** Verify actual network behavior, permissions, Play Data Safety declarations, and the privacy policy before publishing a release.
+**Privacy claims describe implementation and product intent, not legal certification.** Before publication, verify actual network behavior, permissions, Play Data Safety declarations, and the privacy policy.
 
-## How the inference model works
+## Inference model
 
-AdSight uses a transparent scoring approach rather than presenting an opaque model as fact.
+AdSight uses a deterministic, evidence-first scoring approach rather than presenting an opaque model as fact.
 
-Signals can receive different weights depending on type, recency, repetition, and corroboration. A recent repeated search can provide stronger evidence than an old single signal. Multiple independent signals pointing toward the same category can increase evidence strength.
+Signals receive different weights depending on type, recency, repetition, and corroboration. A recent repeated search can provide stronger evidence than an old single signal. Multiple independent signal types can increase corroboration.
 
-A prediction should expose:
+Every inference records:
 
 - category score;
 - supporting evidence;
-- model confidence;
+- confidence;
 - data quality and coverage;
+- uncertainty;
 - model version.
 
 These values are estimates produced by AdSight. They are not probabilities supplied by an advertising platform and are not a guarantee that an ad will be shown.
 
-## Supported platform models
+## Platform models
 
-The current product includes models for Facebook, Instagram, Google, YouTube, TikTok, LinkedIn, and Amazon.
+The current taxonomy covers Facebook, Instagram, Google, YouTube, TikTok, LinkedIn, and Amazon.
 
-Platform models are heuristic and educational unless backed by user-provided platform data. Platform names identify the context being modeled, not access to proprietary targeting systems.
+Platform names identify the context being modeled, not access to proprietary targeting systems.
 
-## V2 architecture
-
-V2 separates the user interface, application services, data storage, and inference system:
+## Production architecture
 
 ```text
 UI
  ↓
 Application services
+ ├── profile
+ ├── import
+ ├── inference
+ ├── simulation
+ └── history
  ↓
-Signal repository
+Repositories
  ↓
+Encrypted SQLite / SQLCipher
+
 Inference engine
- ├── feature extraction
- ├── recency weighting
- ├── scoring
- ├── confidence calibration
- └── explanations
- ↓
-History / evidence
+ ├── normalization
+ ├── recency
+ ├── repetition
+ ├── corroboration
+ ├── confidence / data quality
+ └── evidence graph
 ```
 
-Structured profile and signal data is being moved toward SQLite-based storage. Encryption is planned for production database storage where supported. Small secrets should use secure platform storage rather than general-purpose key-value storage.
-
-## Project status
-
-AdSight is under active V2 development. The repository contains the working V1 application plus foundations for a more rigorous local inference architecture.
-
-The priority is **trustworthy product behavior over exaggerated AI claims**: clear evidence, reproducible scoring, useful explanations, safe data handling, and reliable builds.
+The app uses Continuous Native Generation. Native configuration is expressed through Expo config plugins so the Android project can be regenerated consistently.
 
 ## Development
 
 ### Requirements
 
-- Node.js compatible with the selected Expo SDK
+- Node.js 22.13+
 - npm
-- Android Studio for native Android development
+- Android Studio for local native development
 - Expo EAS for cloud builds
+
+Expo SDK 57 targets React Native 0.86 and requires Node.js 22.13.x or newer. Use a development build for native modules such as SQLCipher rather than relying on Expo Go. 
 
 ### Install
 
@@ -128,13 +128,25 @@ For Android:
 npm run android
 ```
 
-For a production Android build:
+For a production APK build through EAS:
 
 ```bash
 npm run build:android
 ```
 
-> Native modules used by later V2 milestones may require an Expo development build rather than Expo Go.
+For local release APK validation after native generation:
+
+```bash
+npx expo prebuild --clean --platform android
+cd android
+./gradlew assembleRelease
+```
+
+## Test APKs
+
+Every pull request is intended to produce an installable Android release APK through GitHub Actions as the `AdSight-android-preview` artifact, together with a SHA-256 checksum.
+
+The `test-builds/` directory is reserved for explicitly identified release candidates. Routine CI binaries are not committed to source control because doing so makes repository history unnecessarily large.
 
 ## Repository structure
 
@@ -143,52 +155,66 @@ AdSight-Android-App/
 ├── src/
 │   ├── components/       # Reusable UI components
 │   ├── data/             # Taxonomies and platform mappings
-│   ├── screens/           # App screens
+│   ├── intelligence/     # Deterministic inference and evidence model
+│   ├── screens/          # App screens
 │   ├── services/         # Application services
+│   ├── storage/          # Encrypted SQLite repositories and migrations
 │   ├── theme/            # UI theme
-│   └── types/             # TypeScript types
-├── assets/                # App assets
-├── App.tsx                # Application entry point
-├── app.json               # Expo configuration
-├── package.json           # Dependencies and scripts
-├── eas.json               # EAS build profiles
+│   └── types/            # Domain and navigation types
+├── docs/                 # Architecture and production decisions
+├── test-builds/          # Release-candidate APK convention
+├── assets/               # App assets
+├── App.tsx               # Application entry point
+├── app.json              # Expo configuration
+├── eas.json              # EAS build profiles
 └── README.md
 ```
 
-## Roadmap
+## Production checklist
 
-### V2 foundation
+### Architecture
 
-- [x] Establish evidence-based inference direction
-- [x] Define normalized signal and inference model
-- [x] Define recency-aware scoring
-- [ ] Complete SQLite migration
-- [ ] Add encrypted local database for production builds
-- [ ] Add model versioning and calibration
+- [x] Evidence-based inference foundation
+- [x] Versioned inference model
+- [x] Recency, repetition, corroboration, uncertainty
+- [x] SQLite schema and migrations
+- [x] SQLCipher configuration
+- [x] Secure database-key storage
+- [ ] Complete migration of every legacy screen to repositories
+- [ ] Snapshot history and diff engine
 
 ### Product
 
-- [ ] Advertising Profile
-- [ ] Evidence Explorer
+- [x] Evidence Explorer foundation
+- [ ] Advertising Profile redesign
 - [ ] What Changed
 - [ ] What If simulations
 - [ ] Prediction History
-- [ ] Prediction feedback and evaluation
 - [ ] Privacy Center
-- [ ] Improved user-owned data imports
+- [ ] User-owned import pipeline hardening
 
-### Production
+### Quality
 
-- [ ] Automated TypeScript and lint checks
-- [ ] Unit and integration test coverage
-- [ ] Android release validation
+- [x] TypeScript CI gate
+- [x] Expo dependency and Doctor checks
+- [x] Automated Android release APK build
+- [ ] Deterministic unit-test suite
+- [ ] Import fixture tests
+- [ ] Physical-device smoke test matrix
 - [ ] Privacy/network regression checks
-- [ ] Accurate Play Store Data Safety documentation
+- [ ] Play Store Data Safety documentation
 - [ ] Final privacy policy and legal review
 
-## Contributing
+## Design principles
 
-Issues and pull requests are welcome. Please keep the local-first privacy model intact and avoid adding telemetry, advertising SDKs, data uploads, scraping, or surveillance-style collection without a documented privacy review.
+1. **Explain before impressing.** A transparent estimate is more useful than an unexplained percentage.
+2. **Uncertainty is a feature.** Weak or contradictory evidence must be visible.
+3. **No fabricated integrations.** Never attribute an inference to a platform without source evidence.
+4. **Least privilege.** Every permission needs a concrete user-facing reason.
+5. **Fast first paint.** Database initialization must not produce a blank screen without feedback.
+6. **Recoverable privacy actions.** Deletion and reset flows must explain what will be removed.
+7. **Offline resilience.** The core profile and inference experience should work without connectivity.
+8. **Test the binary, not only TypeScript.** Every meaningful release candidate must produce an installable APK.
 
 ## License
 
