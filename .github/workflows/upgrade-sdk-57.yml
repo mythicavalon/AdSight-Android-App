@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           fetch-depth: 0
           ref: codex/adsight-v2-foundation
@@ -23,13 +23,15 @@ jobs:
         run: echo 'SDK 57 migration marker not present; nothing to do.'
       - name: Setup Node
         if: ${{ hashFiles('.github/UPGRADE_SDK_57') != '' }}
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22.13.1
           cache: npm
       - name: Install declared dependencies
         if: ${{ hashFiles('.github/UPGRADE_SDK_57') != '' }}
-        run: npm install --no-audit --no-fund
+        run: |
+          rm -f package-lock.json
+          npm install --no-audit --no-fund
       - name: Align Expo SDK dependencies
         if: ${{ hashFiles('.github/UPGRADE_SDK_57') != '' }}
         env:
