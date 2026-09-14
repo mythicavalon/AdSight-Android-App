@@ -37,11 +37,6 @@
           "useSQLCipher": true
         }
       ]
-    ],
-    "extra": {
-      "eas": {
-        "projectId": "adsight-privacy-tool"
-      }
-    }
+    ]
   }
 }
